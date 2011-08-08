@@ -153,6 +153,7 @@
         data.limit = limit;
         data.offset = (page - 1) * limit;
       }
+      if (settings.dataset.ajaxData) { $.extend(data, settings.dataset.ajaxData); }
 
       if (settings.dataset.ajax) {
         var options = {
@@ -583,13 +584,16 @@
         var recordsShown = settings.dataset.records.length,
             recordsQueryCount = settings.dataset.queryRecordCount,
             recordsTotal = settings.dataset.totalRecordCount,
-            text = "Showing ";
+            text = "Showing ",
+            collection_name = settings.dataset.recordsCollectionName;
 
         if (recordsShown < recordsQueryCount && settings.features.paginate) {
           var bounds = plugin.records.pageBounds();
           text += (bounds[0] + 1) + " to " + bounds[1] + " of ";
+        } else if (recordsShown === recordsQueryCount) {
+          text += recordsShown + " of ";
         }
-        text += recordsQueryCount + " records";
+        text += recordsQueryCount + " " + collection_name;
         if (recordsQueryCount < recordsTotal) {
           text += " (filtered from " + recordsTotal + " total records)";
         }
@@ -650,15 +654,14 @@
       // merge ajax response json with cached data including
       // meta-data and records
       updateFromJson: function(data) {
-        var records = data[settings.dataset.recordsCollectionName];
-        if (data.queryRecordCount) {
+        if ('queryRecordCount' in data) {
           settings.dataset.queryRecordCount = data.queryRecordCount;
         }
-        if (data.totalRecordCount) {
+        if ('totalRecordCount' in data) {
           settings.dataset.totalRecordCount = data.totalRecordCount;
         }
-        if (records) {
-          settings.dataset.records = records;
+        if (settings.dataset.recordsCollectionName in data) {
+          settings.dataset.records = data[settings.dataset.recordsCollectionName];
         }
       },
       // For really advanced sorting,
