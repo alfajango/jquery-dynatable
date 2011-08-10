@@ -341,11 +341,13 @@
         $link.append("<span class='dynatable-arrow'> &#9650;</span>");
       },
       appendArrowDown: function($link) {
+        console.log($link.html());
         plugin.sortHeaders.removeArrow($link);
         $link.append("<span class='dynatable-arrow'> &#9660;</span>");
       },
       removeArrow: function($link) {
-        $link.find('.dynatable-arrow').remove();
+        // Not sure why `parent()` is needed, the arrow should be inside the link from `append()` above
+        $link.parent().find('.dynatable-arrow').remove();
       }
     };
 
