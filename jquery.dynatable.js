@@ -834,11 +834,7 @@
     plugin.utility = {
       normalizeText: function(text) {
         var style = settings.table.defaultColumnIdStyle;
-        text = plugin.utility.textTransform.trimDash(text);
-        text = plugin.utility.textTransform.camelCase(text);
-        if (style != 'camelCase') {
-          text = plugin.utility.textTransform[style](text);
-        }
+        text = plugin.utility.textTransform[style](text);
         return text;
       },
       textTransform: {
@@ -846,15 +842,19 @@
           return text.replace(/^\s+|\s+$/g, "").replace(/\s+/g, "-");
         },
         camelCase: function(text) {
+          text = plugin.utility.textTransform.trimDash(text);
           return text
             .replace(/(\-[a-zA-Z])/g, function($1){return $1.toUpperCase().replace('-','');})
+            .replace(/([A-Z])([A-Z]+)/g, function($1,$2,$3){return $2 + $3.toLowerCase();})
             .replace(/^[A-Z]/, function($1){return $1.toLowerCase();});
         },
         dashed: function(text) {
-          return plugin.utility.textTransform.lowercase(text.replace(/([^A-Z])([A-Z]+)/g, function($1,$2,$3){return $2 + "-" + $3;}));
+          text = plugin.utility.textTransform.trimDash(text);
+          return plugin.utility.textTransform.lowercase(text);
         },
         underscore: function(text) {
-          return plugin.utility.textTransform.lowercase(text.replace(/([^A-Z])([A-Z]+)/g, function($1,$2,$3){return $2 + "_" + $3;}));
+          text = plugin.utility.textTransform.trimDash(text);
+          return plugin.utility.textTransform.lowercase(text.replace(/(-)/g, '_'));
         },
         lowercase: function(text) {
           return text.replace(/([A-Z])/g, function($1){return $1.toLowerCase();});
