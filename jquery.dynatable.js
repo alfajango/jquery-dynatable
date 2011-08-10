@@ -36,7 +36,7 @@
             queries: null,
             sorts: null,
             page: null,
-            queryEvent: 'change',
+            queryEvent: 'blur change',
             recordCountPlacement: 'after',
             paginationLinkPlacement: 'after',
             searchPlacement: 'before',
