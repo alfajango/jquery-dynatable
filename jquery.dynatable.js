@@ -201,11 +201,20 @@
       push: function(data) {
         var urlString = window.location.search,
             urlOptions,
-            params;
+            params,
+            overridingAttr = ['queries', 'sorts', 'page', 'limit', 'offset'];
 
         if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
         urlOptions = plugin.utility.deserialize(urlString);
         $.extend(urlOptions, data);
+        for (var i = 0; i < overridingAttr.length; i++) {
+          var attr = overridingAttr[i];
+          if (data[attr]) {
+            urlOptions[attr] = data[attr];
+          } else {
+            delete urlOptions[attr];
+          }
+        }
         params = $.param(urlOptions);
 
         window.history.pushState({
@@ -341,7 +350,6 @@
         $link.append("<span class='dynatable-arrow'> &#9650;</span>");
       },
       appendArrowDown: function($link) {
-        console.log($link.html());
         plugin.sortHeaders.removeArrow($link);
         $link.append("<span class='dynatable-arrow'> &#9660;</span>");
       },
@@ -434,7 +442,8 @@
               query = $this.data('dynatable-query') || $this.attr('name') || this.id,
               queryFunction = function(e) {
                 var q = $(this).val();
-                if (q && q === settings.dataset.queries[query]) { return false; }
+                if (q === "") { q = undefined; }
+                if (q === settings.dataset.queries[query]) { return false; }
                 if (q) {
                   plugin.queries.add(query, q);
                 } else {
