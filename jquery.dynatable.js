@@ -39,6 +39,9 @@
             queryEvent: 'blur change',
             recordCountPlacement: 'after',
             paginationLinkPlacement: 'after',
+            paginationPrev: 'Previous',
+            paginationNext: 'Next',
+            paginationGap: [1,2,2,1],
             searchPlacement: 'before',
             perPagePlacement: 'before'
           },
@@ -399,7 +402,7 @@
       }
     };
 
-    // For ajax, to add a query, just do 
+    // For ajax, to add a query, just do
     plugin.queries = {
       add: function(name, value) {
         // reset to first page since query will change records
@@ -497,16 +500,61 @@
             pageLinkClass = 'dynatable-page-link',
             activePageClass = 'dynatable-active-page',
             pages = Math.ceil(settings.dataset.queryRecordCount / settings.dataset.perPage),
-            page = settings.dataset.page;
+            page = settings.dataset.page,
+            breaks = [
+              settings.inputs.paginationGap[0],
+              settings.dataset.page - settings.inputs.paginationGap[1],
+              settings.dataset.page + settings.inputs.paginationGap[2],
+              (pages + 1) - settings.inputs.paginationGap[3]
+            ],
+            $link;
 
         for (var i = 1; i <= pages; i++) {
-          var $link = $('<a></a>',{
-                html: i,
-                'class': pageLinkClass,
-                'data-dynatable-page': i
-              });
+          if ( (i > breaks[0] && i < breaks[1]) || (i > breaks[2] && i < breaks[3])) {
+            // skip to next iteration in loop
+            continue;
+          } else {
+            $link = $('<a></a>',{
+              html: i,
+              'class': pageLinkClass,
+              'data-dynatable-page': i
+            });
 
-          if (page == i) { $link.addClass(activePageClass); }
+            if (page == i) { $link.addClass(activePageClass); }
+
+            // If i is not between one of the following
+            // (1 + (settings.paginationGap[0]))
+            // (page - settings.paginationGap[1])
+            // (page + settings.paginationGap[2])
+            // (pages - settings.paginationGap[3])
+            var breakIndex = breaks.indexOf(i),
+                nextBreak = breaks[breakIndex + 1];
+            if (breakIndex > 0 && i !== 1 && nextBreak && nextBreak > (i + 1)) {
+              var $ellip = $('<span>&hellip;</span>');
+              $link = breakIndex < 2 ? $link.before($ellip) : $link.after($ellip);
+            }
+
+          }
+
+          if (settings.inputs.paginationPrev && i === 1) {
+            var $prevLink = $('<a></a>',{
+              html: settings.inputs.paginationPrev,
+              'class': pageLinkClass,
+              'data-dynatable-page': page - 1
+            });
+            if (page === 1) { $prevLink.addClass(activePageClass); }
+            $link = $link.before($prevLink);
+          }
+          if (settings.inputs.paginationNext && i === pages) {
+            var $nextLink = $('<a></a>',{
+              html: settings.inputs.paginationNext,
+              'class': pageLinkClass,
+              'data-dynatable-page': page + 1
+            });
+            if (page === pages) { $nextLink.addClass(activePageClass); }
+            $link = $link.after($nextLink);
+          }
+
           $pageLinks.append($link.wrap('<li></li>'));
         }
 
@@ -729,7 +777,7 @@
           $(this).find('th,td').each(function(index) {
             record[columns[index].id] = columns[index].dataUnfilter(this, record);
           });
-          // Allow configuration function which alters record based on attributes of 
+          // Allow configuration function which alters record based on attributes of
           // table row (e.g. from html5 data- attributes)
           if (typeof(settings.table.rowUnfilter) === "function") {
             settings.table.rowUnfilter(index, this, record);
