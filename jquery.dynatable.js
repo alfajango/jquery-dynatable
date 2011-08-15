@@ -63,7 +63,15 @@
             recordsCollectionName: 'records'
           },
           filters: {},
-          unfilters: {}
+          unfilters: {},
+          params: {
+            dynatable: 'dynatable',
+            queries: 'queries',
+            sorts: 'sorts',
+            page: 'page',
+            perPage: 'perPage',
+            offset: 'offset'
+          }
         },
         plugin = this,
         $element = $(element),
@@ -88,11 +96,12 @@
         settings.dataset.totalRecordCount = settings.dataset.queryRecordCount;
       }
 
-      var sortsUrl = window.location.search.match(/sorts[^&=]*=[^&]*/g),
-          queriesUrl = window.location.search.match(/queries[^&=]*=[^&]*/g),
-          pageUrl = window.location.search.match(/page=([^&]*)/);
+      var sortsUrl = window.location.search.match(new RegExp(settings.params.sorts + '[^&=]*=[^&]*', 'g')),
+          queriesUrl = window.location.search.match(new RegExp(settings.params.queries + '[^&=]*=[^&]*', 'g')),
+          pageUrl = window.location.search.match(new RegExp(settings.params.page + '=([^&]*)')),
+          perPageUrl = window.location.search.match(new RegExp(settings.params.perPage + '=([^&]*)'));
 
-      settings.dataset.queries = queriesUrl ? plugin.utility.deserialize(queriesUrl)['queries'] : {};
+      settings.dataset.queries = queriesUrl ? plugin.utility.deserialize(queriesUrl)[settings.params.queries] : {};
       if (settings.dataset.queries === "") { settings.dataset.queries = {}; }
 
       if (settings.features.recordCount) {
@@ -108,11 +117,12 @@
           settings.dataset.originalRecords = $.extend(true, [], settings.dataset.records);
         }
         plugin.page.set(pageUrl ? pageUrl[1] : 1);
+        if (perPageUrl) { plugin.perPage.set(perPageUrl[1]); }
         plugin.paginationLinks.attach();
       }
 
       if (settings.features.sort) {
-        settings.dataset.sorts = sortsUrl ? plugin.utility.deserialize(sortsUrl)['sorts'] : {};
+        settings.dataset.sorts = sortsUrl ? plugin.utility.deserialize(sortsUrl)[settings.params.sorts] : {};
         settings.dataset.sortsKeys = sortsUrl ? plugin.utility.keysFromObject(settings.dataset.sorts) : [];
         plugin.sortHeaders.attach();
       }
@@ -141,20 +151,20 @@
     // if non-ajax, executes queryies and sorts on in-page data
     // otherwise, sends query to ajaxUrl with queryies and sorts serialized and appended in ajax data
     plugin.process = function(skipPushState) {
-      var data = {
-            dynatable: true
-          };
+      var data = {};
 
-      if (!$.isEmptyObject(settings.dataset.queries)) { data.queries = settings.dataset.queries; }
+      data[settings.params.dynatable] = true;
+
+      if (!$.isEmptyObject(settings.dataset.queries)) { data[settings.params.queries] = settings.dataset.queries; }
       plugin.processingIndicator.show();
 
-      if (settings.features.sort && !$.isEmptyObject(settings.dataset.sorts)) { data.sorts = settings.dataset.sorts; }
+      if (settings.features.sort && !$.isEmptyObject(settings.dataset.sorts)) { data[settings.params.sorts] = settings.dataset.sorts; }
       if (settings.features.paginate && settings.dataset.page) {
         var page = settings.dataset.page,
-            limit = settings.dataset.perPage;
-        data.page = page;
-        data.limit = limit;
-        data.offset = (page - 1) * limit;
+            perPage = settings.dataset.perPage;
+        data[settings.params.page] = page;
+        data[settings.params.perPage] = perPage;
+        data[settings.params.offset] = (page - 1) * perPage;
       }
       if (settings.dataset.ajaxData) { $.extend(data, settings.dataset.ajaxData); }
 
@@ -204,8 +214,8 @@
       push: function(data) {
         var urlString = window.location.search,
             urlOptions,
-            params,
-            overridingAttr = ['queries', 'sorts', 'page', 'limit', 'offset'];
+            newParams,
+            overridingAttr = $.map(settings.params, function(key, value) { return value; });
 
         if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
         urlOptions = plugin.utility.deserialize(urlString);
