@@ -647,6 +647,7 @@
         $element[settings.inputs.perPagePlacement](plugin.perPage.create());
       },
       set: function(number) {
+        plugin.page.set(1);
         settings.dataset.perPage = parseInt(number);
       }
     };
