@@ -35,6 +35,7 @@
           inputs: {
             queries: null,
             sorts: null,
+            multisort: ['ctrlKey', 'shiftKey', 'metaKey'],
             page: null,
             queryEvent: 'blur change',
             recordCountPlacement: 'after',
@@ -277,7 +278,7 @@
           $('#dynatable-pagination-links-' + element.id).replaceWith(plugin.paginationLinks.create());
         }
         if (settings.features.sort) {
-          $element.find('.dynatable-arrow').remove();
+          plugin.sortHeaders.removeAllArrows();
           $.each(columns, function() {
             var column = this,
                 sortedByColumn = plugin.utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; }),
@@ -324,6 +325,11 @@
 
         $link.toggle(
           function(e) {
+            // Clear existing sorts unless this is a multisort event
+            if (!settings.inputs.multisort || !plugin.utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
+              plugin.sortHeaders.removeAllArrows();
+              plugin.sorts.clear();
+            }
             $.each(sorts, function(index,key) { plugin.sorts.add(key, 1); });
 
             plugin.sortHeaders.appendArrowUp($link);
@@ -332,6 +338,10 @@
             e.preventDefault();
           },
           function(e) {
+            if (!settings.inputs.multisort || !plugin.utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
+              plugin.sortHeaders.removeAllArrows();
+              plugin.sorts.clear();
+            }
             $.each(sorts, function(index,key) { plugin.sorts.add(key, -1); });
 
             plugin.sortHeaders.appendArrowDown($link);
@@ -340,6 +350,10 @@
             e.preventDefault();
           },
           function(e) {
+            if (!settings.inputs.multisort || !plugin.utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
+              plugin.sortHeaders.removeAllArrows();
+              plugin.sorts.clear();
+            }
             $.each(sorts, function(index,key) { plugin.sorts.remove(key); });
 
             plugin.sortHeaders.removeArrow($link);
@@ -373,6 +387,9 @@
       removeArrow: function($link) {
         // Not sure why `parent()` is needed, the arrow should be inside the link from `append()` above
         $link.find('.dynatable-arrow').remove();
+      },
+      removeAllArrows: function() {
+        $element.find('.dynatable-arrow').remove();
       }
     };
 
@@ -390,6 +407,10 @@
         delete settings.dataset.sorts[attr];
         if (index !== -1) { sortsKeys.splice(index, 1); }
         return plugin;
+      },
+      clear: function() {
+        settings.dataset.sorts = {};
+        settings.dataset.sortsKeys.length = 0;
       },
       // Built-in sort functions
       // (the most common use-cases I could think of)
@@ -1004,6 +1025,21 @@
           // (if we make it through all iterations without overriding match with false,
           // then we can return the true result we started with by default)
           if (!result) { return match = false; }
+        });
+        return match;
+      },
+      // Return true if supplied test function passes for ANY items in an array
+      anyMatch: function(item, arrayOrObject, test) {
+        var match = false,
+            isArray = $.isArray(arrayOrObject);
+
+        $.each(arrayOrObject, function(key, value) {
+          var result = isArray ? test(item, value) : test(item, key, value);
+          if (result) {
+            // As soon as a match is found, set match to true, and return false to stop the `$.each` loop
+            match = true;
+            return false;
+          }
         });
         return match;
       }
