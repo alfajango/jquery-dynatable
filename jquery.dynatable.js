@@ -320,48 +320,14 @@
               html: $cell.html()
             }),
             id = $cell.data('dynatable-column'),
-            column = plugin.utility.findObjectInArray(settings.table.columns, {id: id}),
-            sorts = column.sorts;
+            column = plugin.utility.findObjectInArray(settings.table.columns, {id: id});
 
-        $link.toggle(
-          function(e) {
-            // Clear existing sorts unless this is a multisort event
-            if (!settings.inputs.multisort || !plugin.utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
-              plugin.sortHeaders.removeAllArrows();
-              plugin.sorts.clear();
-            }
-            $.each(sorts, function(index,key) { plugin.sorts.add(key, 1); });
+        $link.bind('click', function(e) {
+          plugin.sortHeaders.toggleSort(e, $link, column);
+          plugin.process();
 
-            plugin.sortHeaders.appendArrowUp($link);
-
-            plugin.process();
-            e.preventDefault();
-          },
-          function(e) {
-            if (!settings.inputs.multisort || !plugin.utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
-              plugin.sortHeaders.removeAllArrows();
-              plugin.sorts.clear();
-            }
-            $.each(sorts, function(index,key) { plugin.sorts.add(key, -1); });
-
-            plugin.sortHeaders.appendArrowDown($link);
-
-            plugin.process();
-            e.preventDefault();
-          },
-          function(e) {
-            if (!settings.inputs.multisort || !plugin.utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
-              plugin.sortHeaders.removeAllArrows();
-              plugin.sorts.clear();
-            }
-            $.each(sorts, function(index,key) { plugin.sorts.remove(key); });
-
-            plugin.sortHeaders.removeArrow($link);
-
-            plugin.process();
-            e.preventDefault();
-          }
-        );
+          e.preventDefault();
+        });
 
         return $link;
       },
@@ -390,6 +356,33 @@
       },
       removeAllArrows: function() {
         $element.find('.dynatable-arrow').remove();
+      },
+      toggleSort: function(e, $link, column) {
+        var sortedByColumn = plugin.utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; }),
+            value = settings.dataset.sorts[column.sorts[0]];
+
+        // Clear existing sorts unless this is a multisort event
+        if (!settings.inputs.multisort || !plugin.utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
+          plugin.sortHeaders.removeAllArrows();
+          plugin.sorts.clear();
+        }
+
+        // If sorts for this column are already set
+        if (sortedByColumn) {
+          // If ascending, then make descending
+          if (value == 1) {
+            $.each(column.sorts, function(index,key) { plugin.sorts.add(key, -1); });
+            plugin.sortHeaders.appendArrowDown($link);
+          // If descending, remove sort
+          } else {
+            $.each(column.sorts, function(index,key) { plugin.sorts.remove(key); });
+            plugin.sortHeaders.removeArrow($link);
+          }
+        // Otherwise, if not already set, set to ascending
+        } else {
+          $.each(column.sorts, function(index,key) { plugin.sorts.add(key, 1); });
+          plugin.sortHeaders.appendArrowUp($link);
+        }
       }
     };
 
