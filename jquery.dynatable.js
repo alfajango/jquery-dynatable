@@ -139,7 +139,8 @@
         plugin.process();
       }
 
-      if (settings.features.pushState) {
+      // Check if pushState option is true, and if browser supports it
+      if (settings.features.pushState && history.pushState) {
         window.onpopstate = function(event) {
           if (event.state && event.state.dynatable) {
             plugin.state.pop(event);
@@ -178,7 +179,7 @@
             // update table with new records
             plugin.table.update();
 
-            if (settings.features.pushState && !skipPushState) {
+            if (settings.features.pushState && !skipPushState && history.pushState) {
               plugin.state.push(data);
             }
           },
@@ -204,7 +205,7 @@
         plugin.table.update();
         plugin.processingIndicator.hide();
 
-        if (settings.features.pushState && !skipPushState) {
+        if (settings.features.pushState && !skipPushState && history.pushState) {
           plugin.state.push(data);
         }
       }
@@ -378,14 +379,14 @@
     plugin.sorts = {
       add: function(attr, direction) {
         var sortsKeys = settings.dataset.sortsKeys,
-            index = sortsKeys.indexOf(attr);
+            index = $.inArray(attr, sortsKeys);
         settings.dataset.sorts[attr] = direction;
         if (index === -1) { sortsKeys.push(attr); }
         return plugin;
       },
       remove: function(attr) {
         var sortsKeys = settings.dataset.sortsKeys,
-            index = sortsKeys.indexOf(attr);
+            index = $.inArray(attr, sortsKeys);
         delete settings.dataset.sorts[attr];
         if (index !== -1) { sortsKeys.splice(index, 1); }
         return plugin;
@@ -540,7 +541,7 @@
             // (page - settings.paginationGap[1])
             // (page + settings.paginationGap[2])
             // (pages - settings.paginationGap[3])
-            var breakIndex = breaks.indexOf(i),
+            var breakIndex = $.inArray(i, breaks),
                 nextBreak = breaks[breakIndex + 1];
             if (breakIndex > 0 && i !== 1 && nextBreak && nextBreak > (i + 1)) {
               var $ellip = $('<span>&hellip;</span>');
