@@ -267,14 +267,20 @@
         }
         if (settings.features.sort) {
           $element.find('.dynatable-arrow').remove();
-          $.each(settings.dataset.sorts, function(key, value) {
-            $element.find('[data-dynatable-column="' + key + '"]').each(function(){
-              if (value === 1) {
-                plugin.sortHeaders.appendArrowUp($(this));
-              } else {
-                plugin.sortHeaders.appendArrowDown($(this));
-              }
-            });
+          $.each(columns, function() {
+            var column = this,
+                sortedByColumn = plugin.utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; }),
+                value = settings.dataset.sorts[column.sorts[0]];
+
+            if (sortedByColumn) {
+              $element.find('[data-dynatable-column="' + column.id + '"]').find('.dynatable-sort-header').each(function(){
+                if (value == 1) {
+                  plugin.sortHeaders.appendArrowUp($(this));
+                } else {
+                  plugin.sortHeaders.appendArrowDown($(this));
+                }
+              });
+            }
           });
         }
         if (settings.inputs.queries) {
@@ -301,12 +307,13 @@
               href: '#',
               html: $cell.html()
             }),
-            sorts = settings.dataset.sorts,
-            sortsKeys = settings.dataset.sortsKeys,
-            key = $cell.data('dynatable-column');
+            id = $cell.data('dynatable-column'),
+            column = plugin.utility.findObjectInArray(settings.table.columns, {id: id}),
+            sorts = column.sorts;
+
         $link.toggle(
           function(e) {
-            plugin.sorts.add(key, 1);
+            $.each(sorts, function(index,key) { plugin.sorts.add(key, 1); });
 
             plugin.sortHeaders.appendArrowUp($link);
 
@@ -314,7 +321,7 @@
             e.preventDefault();
           },
           function(e) {
-            plugin.sorts.add(key, -1);
+            $.each(sorts, function(index,key) { plugin.sorts.add(key, -1); });
 
             plugin.sortHeaders.appendArrowDown($link);
 
@@ -322,7 +329,7 @@
             e.preventDefault();
           },
           function(e) {
-            plugin.sorts.remove(key);
+            $.each(sorts, function(index,key) { plugin.sorts.remove(key); });
 
             plugin.sortHeaders.removeArrow($link);
 
@@ -331,13 +338,6 @@
           }
         );
 
-        if (sorts.hasOwnProperty(key)) {
-          if (sorts[key] == 1) {
-            plugin.sortHeaders.appendArrowUp($link);
-          } else {
-            plugin.sortHeaders.appendArrowDown($link);
-          }
-        }
         return $link;
       },
       attach: function() {
@@ -346,7 +346,10 @@
         });
       },
       attachOne: function(cell) {
-        $(cell).html(plugin.sortHeaders.create(cell));
+        var $cell = $(cell);
+        if (!$cell.data('dynatable-no-sort')) {
+          $cell.html(plugin.sortHeaders.create(cell));
+        }
       },
       appendArrowUp: function($link) {
         plugin.sortHeaders.removeArrow($link);
@@ -358,7 +361,7 @@
       },
       removeArrow: function($link) {
         // Not sure why `parent()` is needed, the arrow should be inside the link from `append()` above
-        $link.parent().find('.dynatable-arrow').remove();
+        $link.find('.dynatable-arrow').remove();
       }
     };
 
@@ -802,7 +805,8 @@
       add: function($column, position, skipAppend) {
         var columns = settings.table.columns,
             label = $column.text(),
-            id = $column.data('dynatable-column') || plugin.utility.normalizeText(label);
+            id = $column.data('dynatable-column') || plugin.utility.normalizeText(label),
+            sorts = $column.data('dynatable-sorts') ? $.map($column.data('dynatable-sorts').split(','), function(text) { return $.trim(text); }) : [id];
 
         // Add column data to plugin instance
         columns.splice(position, 0, {
@@ -815,6 +819,7 @@
           dataUnfilter: settings.unfilters[id] || function(cell, record) {
             return $(cell).html();
           },
+          sorts: sorts,
           hidden: $column.css('display') === 'none'
         });
 
@@ -959,6 +964,36 @@
           keys.push(key);
         }
         return keys;
+      },
+      // Find an object in an array of objects by attributes.
+      // E.g. find object with {id: 'hi', name: 'there'} in an array of objects
+      findObjectInArray: function(array, objectAttr) {
+        var foundObject;
+        $.each(array, function(index, item) {
+          // For each object in array, test to make sure all attributes in objectAttr match
+          if (plugin.utility.allMatch(item, objectAttr, function(item, key, value) { return item[key] == value; })) {
+            foundObject = item;
+            return false;
+          }
+        });
+        return foundObject;
+      },
+      // Return true if supplied test function passes for ALL items in an array
+      allMatch: function(item, arrayOrObject, test) {
+        // start off with true result by default
+        var match = true,
+            isArray = $.isArray(arrayOrObject);
+        // Loop through all items in array
+        $.each(arrayOrObject, function(key, value) {
+          var result = isArray ? test(item, value) : test(item, key, value);
+          // If a single item tests false, go ahead and break the array by returning false
+          // and return false as result,
+          // otherwise, continue with next iteration in loop
+          // (if we make it through all iterations without overriding match with false,
+          // then we can return the true result we started with by default)
+          if (!result) { return match = false; }
+        });
+        return match;
       }
     };
 
