@@ -49,6 +49,7 @@
           dataset: {
             ajax: false,
             ajaxUrl: null,
+            ajaxCache: null,
             ajaxOnLoad: false,
             ajaxMethod: 'GET',
             ajaxDataType: 'json',
@@ -190,6 +191,7 @@
         };
         // Do not pass url to `ajax` options if blank
         if (settings.dataset.ajaxUrl) { options.url = settings.dataset.ajaxUrl; }
+        if (settings.dataset.ajaxCache !== null) { options.cache = settings.dataset.ajaxCache; }
 
         $.ajax(options);
       } else {
