@@ -61,6 +61,7 @@
             perPageOptions: [10,20,50,100],
             sorts: null,
             sortsKeys: null,
+            sortTypes: {},
             records: null,
             recordsCollectionName: 'records'
           },
@@ -114,13 +115,19 @@
         plugin.search.attach();
       }
 
+      // Create cache of original full recordset (unpaginated and unqueried)
+      if (!settings.dataset.ajax) {
+        settings.dataset.originalRecords = $.extend(true, [], settings.dataset.records);
+      }
+
       if (settings.features.paginate) {
-        if (!settings.dataset.ajax) {
-          settings.dataset.originalRecords = $.extend(true, [], settings.dataset.records);
-        }
         plugin.page.set(pageUrl ? pageUrl[1] : 1);
         if (perPageUrl) { plugin.perPage.set(perPageUrl[1]); }
         plugin.paginationLinks.attach();
+
+        if (settings.features.perPageSelect) {
+          plugin.perPage.attach();
+        }
       }
 
       if (settings.features.sort) {
@@ -129,15 +136,11 @@
         plugin.sortHeaders.attach();
       }
 
-      if (settings.features.perPageSelect) {
-        plugin.perPage.attach();
-      }
-
       if (settings.inputs.queries) {
         plugin.queries.setupInputs();
       }
 
-      if ((settings.dataset.ajax && settings.dataset.ajaxOnLoad) || settings.features.paginate) {
+      if (!settings.dataset.ajax || (settings.dataset.ajax && settings.dataset.ajaxOnLoad) || settings.features.paginate) {
         plugin.process();
       }
 
@@ -195,9 +198,7 @@
 
         $.ajax(options);
       } else {
-        if (settings.features.paginate) {
-          plugin.records.resetOriginal();
-        }
+        plugin.records.resetOriginal();
         plugin.queries.run();
         if (settings.features.sort) {
           plugin.records.sort();
@@ -218,20 +219,18 @@
       push: function(data) {
         var urlString = window.location.search,
             urlOptions,
-            newParams,
-            overridingAttr = $.map(settings.params, function(key, value) { return value; });
+            newParams;
 
         if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
         urlOptions = plugin.utility.deserialize(urlString);
         $.extend(urlOptions, data);
-        for (var i = 0; i < overridingAttr.length; i++) {
-          var attr = overridingAttr[i];
-          if (data[attr]) {
-            urlOptions[attr] = data[attr];
+        $.each(settings.params, function(attr, label) {
+          if (data[label]) {
+            urlOptions[label] = data[label];
           } else {
-            delete urlOptions[attr];
+            delete urlOptions[label];
           }
-        }
+        });
         params = $.param(urlOptions);
 
         window.history.pushState({
@@ -406,6 +405,19 @@
       clear: function() {
         settings.dataset.sorts = {};
         settings.dataset.sortsKeys.length = 0;
+      },
+      // Try to intelligently guess which sort function to use
+      // based on the type of attribute values
+      guessType: function(a, b, attr) {
+        var types = {
+              string: 'string',
+              number: 'number',
+              'boolean': 'number',
+              object: 'number' // dates and null values are also objects, this works...
+            },
+            attrType = a[attr] ? typeof(a[attr]) : typeof(b[attr]),
+            type = types[attrType] || 'number';
+        return type;
       },
       // Built-in sort functions
       // (the most common use-cases I could think of)
@@ -760,7 +772,7 @@
         var sort = [].sort,
             sorts = settings.dataset.sorts,
             sortsKeys = settings.dataset.sortsKeys,
-            sortType = 'string';
+            sortTypes = settings.dataset.sortTypes;
 
         var sortFunction = function(a, b) {
           var comparison;
@@ -768,7 +780,8 @@
             comparison = plugin.sorts.functions['originalPlacement'](a, b);
           } else {
             $.each(sortsKeys, function(index, attr) {
-              var direction = sorts[attr];
+              var direction = sorts[attr],
+                  sortType = sortTypes[attr] || plugin.sorts.guessType(a, b, attr);
               comparison = plugin.sorts.functions[sortType](a, b, attr, direction);
               // Don't need to sort any further unless this sort is a tie between a and b,
               // so return false to break the $.each() loop unless tied
