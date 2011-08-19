@@ -409,7 +409,8 @@
         settings.dataset.sortsKeys.length = 0;
       },
       // Try to intelligently guess which sort function to use
-      // based on the type of attribute values
+      // based on the type of attribute values.
+      // Consider using something more robust than `typeof` (http://javascriptweblog.wordpress.com/2011/08/08/fixing-the-javascript-typeof-operator/)
       guessType: function(a, b, attr) {
         var types = {
               string: 'string',
@@ -1058,7 +1059,6 @@
       },
       // Return true if two objects are equal
       // (i.e. have the same attributes and attribute values)
-      // modified from http://stackoverflow.com/questions/3176962/jquery-object-equality/3177083#3177083
       objectsEqual: function(a, b) {
         for (attr in a) {
           if (a.hasOwnProperty(attr)) {
