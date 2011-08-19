@@ -62,8 +62,7 @@
             sorts: null,
             sortsKeys: null,
             sortTypes: {},
-            records: null,
-            recordsCollectionName: 'records'
+            records: null
           },
           filters: {},
           unfilters: {},
@@ -73,7 +72,10 @@
             sorts: 'sorts',
             page: 'page',
             perPage: 'perPage',
-            offset: 'offset'
+            offset: 'offset',
+            records: 'records',
+            queryRecordCount: 'queryRecordCount',
+            totalRecordCount: 'totalRecordCount'
           }
         },
         plugin = this,
@@ -473,12 +475,15 @@
       },
       // Shortcut for performing simple query from built-in search
       runSearch: function(q) {
+        var origQueries = $.extend({}, settings.dataset.queries);
         if (q) {
           plugin.queries.add('search', q);
         } else {
           plugin.queries.remove('search');
         }
-        plugin.process();
+        if (!plugin.utility.objectsEqual(settings.dataset.queries, origQueries)) {
+          plugin.process();
+        }
       },
       setupInputs: function() {
         settings.inputs.queries.each(function() {
@@ -687,7 +692,7 @@
             recordsQueryCount = settings.dataset.queryRecordCount,
             recordsTotal = settings.dataset.totalRecordCount,
             text = "Showing ",
-            collection_name = settings.dataset.recordsCollectionName;
+            collection_name = settings.params.records;
 
         if (recordsShown < recordsQueryCount && settings.features.paginate) {
           var bounds = plugin.records.pageBounds();
@@ -756,14 +761,14 @@
       // merge ajax response json with cached data including
       // meta-data and records
       updateFromJson: function(data) {
-        if ('queryRecordCount' in data) {
-          settings.dataset.queryRecordCount = data.queryRecordCount;
+        if (settings.params.queryRecordCount in data) {
+          settings.dataset.queryRecordCount = data[settings.params.queryRecordCount];
         }
-        if ('totalRecordCount' in data) {
-          settings.dataset.totalRecordCount = data.totalRecordCount;
+        if (settings.params.totalRecordCount in data) {
+          settings.dataset.totalRecordCount = data[settings.params.totalRecordCount];
         }
-        if (settings.dataset.recordsCollectionName in data) {
-          settings.dataset.records = data[settings.dataset.recordsCollectionName];
+        if (settings.params.records in data) {
+          settings.dataset.records = data[settings.params.records];
         }
       },
       // For really advanced sorting,
@@ -1050,6 +1055,24 @@
           }
         });
         return match;
+      },
+      // Return true if two objects are equal
+      // (i.e. have the same attributes and attribute values)
+      // modified from http://stackoverflow.com/questions/3176962/jquery-object-equality/3177083#3177083
+      objectsEqual: function(a, b) {
+        for (attr in a) {
+          if (a.hasOwnProperty(attr)) {
+            if (!b.hasOwnProperty(attr) || a[attr] !== b[attr]) {
+              return false;
+            }
+          }
+        }
+        for (attr in b) {
+          if (b.hasOwnProperty(attr) && !a.hasOwnProperty(attr)) {
+            return false;
+          }
+        }
+        return true;
       }
     };
 
