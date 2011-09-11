@@ -861,6 +861,7 @@
           label: label,
           id: id,
           dataFilter: settings.filters[id] || function(record) {
+            // TODO: automatically convert common types, such as arrays and objects, to string
             return record[id];
           },
           dataUnfilter: settings.unfilters[id] || function(cell, record) {
