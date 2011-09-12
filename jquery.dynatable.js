@@ -464,8 +464,16 @@
       run: function() {
         $.each(settings.dataset.queries, function(query, value) {
           if (plugin.queries.functions[query] === undefined) {
-            $.error("Query named '" + query + "' called, but not defined in queries.functions");
-            return true; // to skip to next query
+            // Try to lazily evaluate query from column names if not explictly defined
+            var queryColumn = plugin.utility.findObjectInArray(settings.table.columns, {id: query});
+            if (queryColumn) {
+              plugin.queries.functions[query] = function(record, queryValue) {
+                return record[query] == queryValue;
+              };
+            } else {
+              $.error("Query named '" + query + "' called, but not defined in queries.functions");
+              return true; // to skip to next query
+            }
           }
           // collect all records that return true for query
           settings.dataset.records = $.map(settings.dataset.records, function(record) {
@@ -698,7 +706,7 @@
         if (recordsShown < recordsQueryCount && settings.features.paginate) {
           var bounds = plugin.records.pageBounds();
           text += (bounds[0] + 1) + " to " + bounds[1] + " of ";
-        } else if (recordsShown === recordsQueryCount) {
+        } else if (recordsShown === recordsQueryCount && settings.features.paginate) {
           text += recordsShown + " of ";
         }
         text += recordsQueryCount + " " + collection_name;
@@ -825,6 +833,12 @@
           var record = {};
           record['dynatable-original-index'] = index;
           $(this).find('th,td').each(function(index) {
+            if (columns[index] === undefined) {
+              // Header cell didn't exist for this column, so let's generate and append
+              // a new header cell with a randomly generated name (so we can store and
+              // retrieve the contents of this column for each record)
+              plugin.columns.add(plugin.columns.generate(), columns.length, false, true); // don't skipAppend, do skipUpdate
+            }
             record[columns[index].id] = columns[index].dataUnfilter(this, record);
           });
           // Allow configuration function which alters record based on attributes of
@@ -849,7 +863,7 @@
           plugin.columns.add($(this), index, true);
         });
       },
-      add: function($column, position, skipAppend) {
+      add: function($column, position, skipAppend, skipUpdate) {
         var columns = settings.table.columns,
             label = $column.text(),
             id = $column.data('dynatable-column') || plugin.utility.normalizeText(label),
@@ -860,13 +874,8 @@
           index: position,
           label: label,
           id: id,
-          dataFilter: settings.filters[id] || function(record) {
-            // TODO: automatically convert common types, such as arrays and objects, to string
-            return record[id];
-          },
-          dataUnfilter: settings.unfilters[id] || function(cell, record) {
-            return $(cell).html();
-          },
+          dataFilter: settings.filters[id] || plugin.columns.defaultFilter,
+          dataUnfilter: settings.unfilters[id] || plugin.columns.defaultUnfilter,
           sorts: sorts,
           hidden: $column.css('display') === 'none'
         });
@@ -879,19 +888,30 @@
 
         // Append column header to table
         if (!skipAppend) {
-          var domPosition = position + 1;
-          $element.find(settings.table.headRowSelector)
-            .children('th:nth-child(' + domPosition + '),td:nth-child(' + domPosition + ')')
-              .before($column);
+          var domPosition = position + 1,
+              $sibling = $element.find(settings.table.headRowSelector)
+                .children('th:nth-child(' + domPosition + '),td:nth-child(' + domPosition + ')').first(),
+              columnsAfter = columns.slice(position + 1, columns.length);
+
+          if ($sibling.length) {
+            $sibling.before($column);
+          // sibling column doesn't yet exist (maybe this is the last column in the header row)
+          } else {
+            $element.find(settings.table.headRowSelector).append($column);
+          }
 
           plugin.sortHeaders.attachOne($column.get());
 
           // increment the index of all columns after this one that was just inserted
-          $.each(columns.slice(position + 1, columns.length), function() {
-            this.index += 1;
-          });
+          if (columnsAfter.length) {
+            $.each(columnsAfter, function() {
+              this.index += 1;
+            });
+          }
 
-          plugin.table.update();
+          if (!skipUpdate) {
+            plugin.table.update();
+          }
         }
 
         return plugin;
@@ -928,6 +948,20 @@
         columns.splice(index, 1);
         $.each(columns.slice(index, columns.length), function() {
           this.index -= 1;
+        });
+      },
+      defaultFilter: function(record) {
+        // `this` is the column object in settings.columns
+        // TODO: automatically convert common types, such as arrays and objects, to string
+        return record[this.id];
+      },
+      defaultUnfilter: function(cell, record) {
+        return $(cell).html();
+      },
+      generate: function() {
+        return $('<th></th>', {
+          'data-dynatable-column': 'dynatable-' + plugin.utility.randomHash(),
+          'data-dynatable-no-sort': 'true'
         });
       }
     };
@@ -1074,6 +1108,10 @@
           }
         }
         return true;
+      },
+      // Taken from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/105074#105074
+      randomHash: function() {
+        return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
       }
     };
 
