@@ -85,6 +85,20 @@
     plugin.settings = {};
 
     plugin.init = function() {
+      // TODO: figure out a better way to do this.
+      // Doing `extend(true)` causes any elements that are arrays
+      // to merge the default and options arrays instead of overriding the defaults.
+      if (options.inputs) {
+        if (options.inputs.multisort) {
+          defaults.inputs.multisort = undefined;
+        }
+        if (options.inputs.paginationGap) {
+          defaults.inputs.paginationGap = undefined;
+        }
+      }
+      if (options.dataset && options.dataset.perPageOptions) {
+        defaults.dataset.perPageOptions = undefined;
+      }
       plugin.settings = settings = $.extend(true, {}, defaults, options);
 
       plugin.processingIndicator.attach();
