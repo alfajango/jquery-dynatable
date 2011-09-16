@@ -973,9 +973,13 @@
         return $(cell).html();
       },
       generate: function() {
+        // Use increment to create unique column name that is the same each time the page is reloaded,
+        // in order to avoid errors with mismatched attribute names when loading cached `dataset.records` array
+        var increment = $element.find(settings.table.headRowSelector).children('th[data-dynatable-generated]').length;
         return $('<th></th>', {
-          'data-dynatable-column': 'dynatable-' + plugin.utility.randomHash(),
-          'data-dynatable-no-sort': 'true'
+          'data-dynatable-column': 'dynatable-generated-' + increment, //+ plugin.utility.randomHash(),
+          'data-dynatable-no-sort': 'true',
+          'data-dynatable-generated': increment
         });
       }
     };
