@@ -873,9 +873,14 @@
     plugin.columns = {
       // initialize table[columns] array
       getFromTable: function() {
-        $element.find(settings.table.headRowSelector).children('th,td').each(function(index){
-          plugin.columns.add($(this), index, true);
-        });
+        var $columns = $element.find(settings.table.headRowSelector).children('th,td');
+        if ($columns.length) {
+          $columns.each(function(index){
+            plugin.columns.add($(this), index, true);
+          });
+        } else {
+          return $.error("Couldn't find any columns headers in '" + settings.table.headRowSelector + " th,td'. If your header row is different, specify the selector in the table: headRowSelector option.");
+        }
       },
       add: function($column, position, skipAppend, skipUpdate) {
         var columns = settings.table.columns,
