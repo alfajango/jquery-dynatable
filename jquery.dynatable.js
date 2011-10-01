@@ -12,6 +12,11 @@
 //
 
 (function($) {
+  var globalDefaults = {};
+
+  $.dynatableSetup = function(options) {
+    $.extend(true, globalDefaults, options);
+  }
 
   $.dynatable = function(element, options) {
 
@@ -88,18 +93,29 @@
       // TODO: figure out a better way to do this.
       // Doing `extend(true)` causes any elements that are arrays
       // to merge the default and options arrays instead of overriding the defaults.
-      if (options.inputs) {
-        if (options.inputs.multisort) {
-          defaults.inputs.multisort = undefined;
+      if (options) {
+        if (options.inputs) {
+          if (options.inputs.multisort) {
+            defaults.inputs.multisort = undefined;
+            if (globalDefaults.inputs && globalDefaults.inputs.multisort) {
+              globalDefaults.inputs.multisort = undefined;
+            }
+          }
+          if (options.inputs.paginationGap) {
+            defaults.inputs.paginationGap = undefined;
+            if (globalDefaults.inputs && globalDefaults.inputs.paginationGap) {
+              globalDefaults.inputs.paginationGap = undefined;
+            }
+          }
         }
-        if (options.inputs.paginationGap) {
-          defaults.inputs.paginationGap = undefined;
+        if (options.dataset && options.dataset.perPageOptions) {
+          defaults.dataset.perPageOptions = undefined;
+          if (globalDefaults.dataset && globalDefaults.dataset.perPageOptions) {
+            globalDefaults.dataset.perPageOptions = undefined;
+          }
         }
       }
-      if (options.dataset && options.dataset.perPageOptions) {
-        defaults.dataset.perPageOptions = undefined;
-      }
-      plugin.settings = settings = $.extend(true, {}, defaults, options);
+      plugin.settings = settings = $.extend(true, {}, defaults, globalDefaults, options);
 
       plugin.processingIndicator.attach();
 
@@ -277,9 +293,11 @@
 
           // grab the record's attribute for each column
           $.each(columns, function(colIndex, column) {
-            var $td = $('<td></td>', {
-              html: column.dataFilter(record)
-            });
+            var html = column.dataFilter(record),
+                $td = $('<td></td>', {
+                  html: html
+                });
+
             if (column.hidden) {
               $td.hide();
             }
@@ -443,8 +461,12 @@
           return a[attr] === b[attr] ? 0 : (direction > 0 ? a[attr] - b[attr] : b[attr] - a[attr]);
         },
         string: function(a, b, attr, direction) {
-          var aAttr = a[attr].toLowerCase(), bAttr = b[attr].toLowerCase();
-          var comparison = aAttr === bAttr ? 0 : (direction > 0 ? aAttr > bAttr : bAttr > aAttr);
+          var aAttr = (a['dynatable-sortable-text'] && a['dynatable-sortable-text'][attr]) ? a['dynatable-sortable-text'][attr] : a[attr],
+              bAttr = (b['dynatable-sortable-text'] && b['dynatable-sortable-text'][attr]) ? b['dynatable-sortable-text'][attr] : b[attr],
+              comparison;
+          aAttr = aAttr.toLowerCase();
+          bAttr = bAttr.toLowerCase();
+          comparison = aAttr === bAttr ? 0 : (direction > 0 ? aAttr > bAttr : bAttr > aAttr);
           // force false boolean value to -1, true to 1, and tie to 0
           return comparison === false ? -1 : (comparison - 0);
         },
@@ -853,7 +875,20 @@
               // retrieve the contents of this column for each record)
               plugin.columns.add(plugin.columns.generate(), columns.length, false, true); // don't skipAppend, do skipUpdate
             }
-            record[columns[index].id] = columns[index].dataUnfilter(this, record);
+            var value = columns[index].dataUnfilter(this, record),
+                attr = columns[index].id;
+
+            // If value from table is HTML, let's get and cache the text equivalent for
+            // the default string sorting, since it rarely makes sense for sort headers
+            // to sort based on HTML tags.
+            if (typeof(value) === "string" && value.match(/\s*\<.+\>/)) {
+              if (! record['dynatable-sortable-text']) {
+                record['dynatable-sortable-text'] = {};
+              }
+              record['dynatable-sortable-text'][attr] = $(value.trim()).text();
+            }
+
+            record[attr] = value;
           });
           // Allow configuration function which alters record based on attributes of
           // table row (e.g. from html5 data- attributes)
