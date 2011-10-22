@@ -186,14 +186,13 @@
       }
     };
 
-    // if non-ajax, executes queryies and sorts on in-page data
-    // otherwise, sends query to ajaxUrl with queryies and sorts serialized and appended in ajax data
+    // if non-ajax, executes queries and sorts on in-page data
+    // otherwise, sends query to ajaxUrl with queries and sorts serialized and appended in ajax data
     plugin.process = function(skipPushState) {
       var data = {};
 
-      data[settings.params.dynatable] = true;
-
       if (!$.isEmptyObject(settings.dataset.queries)) { data[settings.params.queries] = settings.dataset.queries; }
+      // TODO: Wrap this in a try/rescue block to hide the processing indicator and indicate something went wrong if error
       plugin.processingIndicator.show();
 
       if (settings.features.sort && !$.isEmptyObject(settings.dataset.sorts)) { data[settings.params.sorts] = settings.dataset.sorts; }
@@ -251,7 +250,9 @@
       push: function(data) {
         var urlString = window.location.search,
             urlOptions,
-            newParams;
+            newParams,
+            cacheStr,
+            cache;
 
         if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
         urlOptions = plugin.utility.deserialize(urlString);
@@ -265,17 +266,28 @@
         });
         params = $.param(urlOptions);
 
-        window.history.pushState({
-          dynatable: {
-            dataset: settings.dataset
-          }
-        }, "Dynatable state", '?' + params);
+        cache = { dynatable: { dataset: settings.dataset } };
+        cacheStr = JSON.stringify(cache);
+
+        // Mozilla has a 640k char limit on what can be stored in pushState.
+        // See "limit" in https://developer.mozilla.org/en/DOM/Manipulating_the_browser_history#The_pushState().C2.A0method
+        // and "dataStr.length" in http://wine.git.sourceforge.net/git/gitweb.cgi?p=wine/wine-gecko;a=patch;h=43a11bdddc5fc1ff102278a120be66a7b90afe28
+        if ( $.browser.mozilla && cacheStr.length > 640000 ) {
+          // Make cached records = null, so that `pop` will rerun process to retrieve records
+          cache.dynatable.dataset.records = null;
+        }
+        window.history.pushState(cache, "Dynatable state", '?' + params);
       },
       pop: function(event) {
         var data = event.state.dynatable;
         settings.dataset = data.dataset;
 
-        plugin.table.update();
+        // If dataset.records is cached from pushState
+        if ( data.dataset.records ) {
+          plugin.table.update();
+        } else {
+          plugin.process(true);
+        }
       }
     }
 
@@ -311,6 +323,9 @@
         }
         if (settings.features.paginate) {
           $('#dynatable-pagination-links-' + element.id).replaceWith(plugin.paginationLinks.create());
+          if (settings.features.perPageSelect) {
+            $('#dynatable-per-page-' + element.id).val(parseInt(settings.dataset.perPage));
+          }
         }
         if (settings.features.sort) {
           plugin.sortHeaders.removeAllArrows();
