@@ -907,7 +907,7 @@
               if (! record['dynatable-sortable-text']) {
                 record['dynatable-sortable-text'] = {};
               }
-              record['dynatable-sortable-text'][attr] = $(value.trim()).text();
+              record['dynatable-sortable-text'][attr] = $($.trim(value)).text();
             }
 
             record[attr] = value;
