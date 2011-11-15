@@ -1088,7 +1088,7 @@
         for (var i = 0; i < vars.length; i++) {
           var pair = vars[i].split("="),
               k = decodeURIComponent(pair[0]),
-              v = decodeURIComponent(pair[1]).replace("+", " "),
+              v = decodeURIComponent(pair[1].replace(/\+/g, ' ')),
               m;
 
           // modified to parse multi-level parameters (e.g. "hi[there][dude]=whatsup" => hi: {there: {dude: "whatsup"}})
