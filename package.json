@@ -1,0 +1,48 @@
+{
+  "name": "Dynatable",
+  "description": "A funner, semantic, HTML5+JSON, interactive table plugin.",
+  "version": "0.0.1",
+  "keywords": [
+    "table",
+    "datatables",
+    "dynamic table"
+  ],
+  "maintainers": [
+    {
+      "name": "Steve Schwartz",
+      "email": "steve@alfajango.com",
+      "web": "http://www.alfajango.com/blog"
+    }
+  ],
+  "contributors": [
+    {
+      "name": "Steve Schwartz",
+      "email": "steve@alfajango.com",
+      "web": "http://www.alfajango.com/blog"
+    }
+  ],
+  "dependencies": {
+    "jquery": "1.6"
+  },
+  "bugs": {
+    "mail": "support@alfajango.com",
+    "web": "https://github.com/jangosteve/jquery-dynatable/issues"
+  },
+  "repositories"	: [
+    {
+      "type": "git",
+      "url": "https://github.com/jangosteve/jquery-dynatable.git"
+    }
+  ],
+  "licenses": [
+    {
+      "name": "MIT",
+      "url": "http://www.opensource.org/licenses/mit-license.php"
+    },
+    {
+      "name": "GPL",
+      "url": "http://www.gnu.org/licenses/gpl.html"
+    }
+  ],
+  "homepage": "https://github.com/jangosteve/jquery-dynatable"
+}
