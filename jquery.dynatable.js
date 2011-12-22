@@ -79,6 +79,7 @@
             perPage: 'perPage',
             offset: 'offset',
             records: 'records',
+            record: null,
             queryRecordCount: 'queryRecordCount',
             totalRecordCount: 'totalRecordCount'
           }
@@ -829,15 +830,25 @@
       // merge ajax response json with cached data including
       // meta-data and records
       updateFromJson: function(data) {
+        var records;
+        if (settings.params.records === "_root") {
+          records = data;
+        } else if (settings.params.records in data) {
+          records = data[settings.params.records];
+        }
+        if (settings.params.record) {
+          var len = records.length - 1;
+          for (var i = 0; i < len; i++) {
+            records[i] = records[i][settings.params.record];
+          }
+        }
         if (settings.params.queryRecordCount in data) {
           settings.dataset.queryRecordCount = data[settings.params.queryRecordCount];
         }
         if (settings.params.totalRecordCount in data) {
           settings.dataset.totalRecordCount = data[settings.params.totalRecordCount];
         }
-        if (settings.params.records in data) {
-          settings.dataset.records = data[settings.params.records];
-        }
+        settings.dataset.records = records;
       },
       // For really advanced sorting,
       // see http://james.padolsey.com/javascript/sorting-elements-with-jquery/
