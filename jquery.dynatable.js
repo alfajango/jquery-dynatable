@@ -325,6 +325,9 @@
             if (column.hidden) {
               $td.hide();
             }
+            if (column.textAlign) {
+              $td.css('text-align', column.textAlign);
+            }
             $tr.append($td);
           });
           $rows = $rows.add($tr);
@@ -968,7 +971,8 @@
           dataFilter: settings.filters[id] || plugin.columns.defaultFilter,
           dataUnfilter: settings.unfilters[id] || plugin.columns.defaultUnfilter,
           sorts: sorts,
-          hidden: $column.css('display') === 'none'
+          hidden: $column.css('display') === 'none',
+          textAlign: $column.css('text-align')
         });
 
         // Modify header cell
