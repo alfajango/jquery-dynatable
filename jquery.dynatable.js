@@ -226,7 +226,16 @@
           }
         };
         // Do not pass url to `ajax` options if blank
-        if (settings.dataset.ajaxUrl) { options.url = settings.dataset.ajaxUrl; }
+        if (settings.dataset.ajaxUrl) {
+          options.url = settings.dataset.ajaxUrl;
+
+        // If ajaxUrl is blank, then we're using the current page URL,
+        // we need to strip out any query, sort, or page data controlled by dynatable
+        // that may have been in URL when page loaded, so that it doesn't conflict with
+        // what's passed in with the data ajax parameter
+        } else {
+          options.url = plugin.utility.refreshQueryString(window.location.href, {});
+        }
         if (settings.dataset.ajaxCache !== null) { options.cache = settings.dataset.ajaxCache; }
 
         $.ajax(options);
@@ -257,16 +266,10 @@
             cache;
 
         if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
-        urlOptions = plugin.utility.deserialize(urlString);
         $.extend(urlOptions, data);
-        $.each(settings.params, function(attr, label) {
-          if (data[label]) {
-            urlOptions[label] = data[label];
-          } else {
-            delete urlOptions[label];
-          }
-        });
-        params = $.param(urlOptions);
+
+        params = plugin.utility.refreshQueryString(urlString, data);
+        $element.trigger('dynatable:push', data);
 
         cache = { dynatable: { dataset: settings.dataset } };
         cacheStr = JSON.stringify(cache);
@@ -1129,6 +1132,30 @@
           }
         }
         return hash;
+      },
+      refreshQueryString: function(urlString, data) {
+        var queryString = urlString.split('?'),
+            path = queryString.shift(),
+            urlOptions;
+
+        urlOptions = plugin.utility.deserialize(urlString);
+
+        $.each(settings.params, function(attr, label) {
+          // Skip over parameters matching attributes for disabled features (i.e. leave them untouched)
+          if (
+            (!settings.features.search && attr == "queries") ||
+              (!settings.features.sort && attr == "sorts") ||
+                (!settings.features.paginate && plugin.utility.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
+          ) {
+            return true;
+          }
+          if (data[label]) {
+            urlOptions[label] = data[label];
+          } else {
+            delete urlOptions[label];
+          }
+        });
+        return unescape($.param(urlOptions));
       },
       // Get array of keys from object
       // see http://stackoverflow.com/questions/208016/how-to-list-the-properties-of-a-javascript-object/208020#208020
