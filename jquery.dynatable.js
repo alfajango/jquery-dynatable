@@ -208,6 +208,7 @@
       if (settings.dataset.ajax) {
         var options = {
           type: settings.dataset.ajaxMethod,
+          dataType: settings.dataset.ajaxDataType,
           data: data,
           success: function(response) {
             // Merge ajax results and meta-data into dynatables cached data
