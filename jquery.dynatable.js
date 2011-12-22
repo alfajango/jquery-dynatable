@@ -394,6 +394,14 @@
           e.preventDefault();
         });
 
+        if (plugin.sortHeaders.sortedByColumn($link, column)) {
+          if (plugin.sortHeaders.sortedByColumnValue(column) == 1) {
+            plugin.sortHeaders.appendArrowUp($link);
+          } else {
+            plugin.sortHeaders.appendArrowDown($link);
+          }
+        }
+
         return $link;
       },
       attach: function() {
@@ -423,9 +431,8 @@
         $element.find('.dynatable-arrow').remove();
       },
       toggleSort: function(e, $link, column) {
-        var sortedByColumn = plugin.utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; }),
-            value = settings.dataset.sorts[column.sorts[0]];
-
+        var sortedByColumn = plugin.sortHeaders.sortedByColumn($link, column),
+            value = plugin.sortHeaders.sortedByColumnValue(column);
         // Clear existing sorts unless this is a multisort event
         if (!settings.inputs.multisort || !plugin.utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
           plugin.sortHeaders.removeAllArrows();
@@ -448,6 +455,12 @@
           $.each(column.sorts, function(index,key) { plugin.sorts.add(key, 1); });
           plugin.sortHeaders.appendArrowUp($link);
         }
+      },
+      sortedByColumn: function($link, column) {
+        return plugin.utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; });
+      },
+      sortedByColumnValue: function(column) {
+        return settings.dataset.sorts[column.sorts[0]];
       }
     };
 
@@ -961,8 +974,14 @@
         var columns = settings.table.columns,
             label = $column.text(),
             id = $column.data('dynatable-column') || plugin.utility.normalizeText(label),
-            sorts = $column.data('dynatable-sorts') ? $.map($column.data('dynatable-sorts').split(','), function(text) { return $.trim(text); }) : [id];
+            dataSorts = $column.data('dynatable-sorts'),
+            sorts = dataSorts ? $.map(dataSorts.split(','), function(text) { return $.trim(text); }) : [id];
 
+        // If the column id is blank, generate an id for it
+        if ( !id ) {
+          plugin.columns.generate($column);
+          id = $column.data('dynatable-column');
+        }
         // Add column data to plugin instance
         columns.splice(position, 0, {
           index: position,
@@ -1053,15 +1072,18 @@
       defaultUnfilter: function(cell, record) {
         return $(cell).html();
       },
-      generate: function() {
+      generate: function($cell) {
+        var cell = $cell === undefined ? $('<th></th>') : $cell;
+        return plugin.columns.attachGeneratedAttributes(cell);
+      },
+      attachGeneratedAttributes: function($cell) {
         // Use increment to create unique column name that is the same each time the page is reloaded,
         // in order to avoid errors with mismatched attribute names when loading cached `dataset.records` array
         var increment = $element.find(settings.table.headRowSelector).children('th[data-dynatable-generated]').length;
-        return $('<th></th>', {
-          'data-dynatable-column': 'dynatable-generated-' + increment, //+ plugin.utility.randomHash(),
-          'data-dynatable-no-sort': 'true',
-          'data-dynatable-generated': increment
-        });
+        return $cell
+          .attr('data-dynatable-column', 'dynatable-generated-' + increment) //+ plugin.utility.randomHash(),
+          .attr('data-dynatable-no-sort', 'true')
+          .attr('data-dynatable-generated', increment);
       }
     };
 
@@ -1107,8 +1129,10 @@
         for (var i = 0; i < vars.length; i++) {
           var pair = vars[i].split("="),
               k = decodeURIComponent(pair[0]),
-              v = decodeURIComponent(pair[1].replace(/\+/g, ' ')),
-              m;
+              v, m;
+
+          if (!pair[1]) { continue };
+          v = decodeURIComponent(pair[1].replace(/\+/g, ' '));
 
           // modified to parse multi-level parameters (e.g. "hi[there][dude]=whatsup" => hi: {there: {dude: "whatsup"}})
           while (m = k.match(/([^&=]+)\[([^&=]+)\]$/)) {
