@@ -6,11 +6,48 @@
 
   <style>
     /* Example Styles for Demo */
+    table {
+      border: solid 1px #ccc;    border-collapse: collapse;
+      border-spacing: 0;
+      position: relative; /* Add positioning */
+    }
+    td, th {
+      border-bottom: solid 1px #eee;
+      border-top: solid 1px #ccc;
+      border-left: solid 1px #eee;
+      border-right: solid 1px #ccc;
+      padding: 10px 15px;
+    }
+    th {
+      background: #eee;
+    }
+    #example-ul {
+      display: block;
+      margin-top: 30px;
+      border: solid 1px #ccc;
+    }
+
   </style>
 
   <script type="text/javascript">
     $(document).ready( function() {
-      $('#example-table').dynatable();
+        $('#example-table').dynatable();
+
+        $('#example-ul').dynatable({
+          table: {
+            rowFilter: function(rowIndex, record) {
+              return $(
+                '<li class="row">This is my name: <span class="the-name">' + record.name + '</span> and this is my ID: <span class="the-id">' + record.id + '</span></div>'
+              );
+            }
+          },
+          dataset: {
+            records: [
+              {id: 1, name: "Alfa Jango"},
+              {id: 2, name: "Bellota"}
+            ]
+          }
+        });
     });
   </script>
 </head>
@@ -33,4 +70,9 @@
       </tr>
     </tbody>
   </table>
+
+  <hr />
+
+  <ul id="example-ul">
+  </ul>
 </body>

@@ -35,7 +35,30 @@
             headRowSelector: 'thead tr', // or e.g. tr:first-child
             bodyRowSelector: 'tbody tr',
             headRowClass: null,
-            rowFilter: null
+            rowFilter: function(rowIndex, record, columns, cellFilter) {
+              var $tr = $('<tr></tr>');
+
+              // grab the record's attribute for each column
+              $.each(columns, function(colIndex, column) {
+                var html = column.dataFilter(record),
+                $td = cellFilter(html);
+
+                if (column.hidden) {
+                  $td.hide();
+                }
+                if (column.textAlign) {
+                  $td.css('text-align', column.textAlign);
+                }
+                $tr.append($td);
+              });
+
+              return $tr;
+            },
+            cellFilter: function(html) {
+              return $('<td></td>', {
+                html: html
+              });
+            }
           },
           inputs: {
             queries: null,
@@ -121,8 +144,12 @@
       plugin.processingIndicator.attach();
 
       settings.table.columns = [];
-      plugin.columns.getFromTable();
-      settings.dataset.records = plugin.records.getFromTable();
+      if ( $element.is('table') ) {
+        plugin.columns.getFromTable();
+      }
+      if ( settings.dataset.records === null && !settings.dataset.ajax ) {
+        settings.dataset.records = plugin.records.getFromTable();
+      }
 
       if (!settings.dataset.queryRecordCount) {
         settings.dataset.queryRecordCount = plugin.records.count();
@@ -309,30 +336,16 @@
       update: function() {
         var $rows = $(),
             columns = settings.table.columns,
-            rowFilter = typeof(settings.table.rowFilter) === "function" ? settings.table.rowFilter : plugin.table.row;
+            rowFilter = settings.table.rowFilter,
+            cellFilter = settings.table.cellFilter;
 
         // loop through records
         $.each(settings.dataset.records, function(rowIndex, record){
-          var $tr = rowFilter(rowIndex, record);
-
-          // grab the record's attribute for each column
-          $.each(columns, function(colIndex, column) {
-            var html = column.dataFilter(record),
-                $td = $('<td></td>', {
-                  html: html
-                });
-
-            if (column.hidden) {
-              $td.hide();
-            }
-            if (column.textAlign) {
-              $td.css('text-align', column.textAlign);
-            }
-            $tr.append($td);
-          });
+          var $tr = rowFilter(rowIndex, record, columns, cellFilter);
           $rows = $rows.add($tr);
         });
 
+        // Appended dynatable interactive elements
         if (settings.features.recordCount) {
           $('#dynatable-record-count-' + element.id).replaceWith(plugin.recordCount.create());
         }
@@ -342,6 +355,8 @@
             $('#dynatable-per-page-' + element.id).val(parseInt(settings.dataset.perPage));
           }
         }
+
+        // Sort headers functionality
         if (settings.features.sort) {
           plugin.sortHeaders.removeAllArrows();
           $.each(columns, function() {
@@ -360,6 +375,8 @@
             }
           });
         }
+
+        // Query search functionality
         if (settings.inputs.queries) {
           settings.inputs.queries.each(function() {
             var $this = $(this),
@@ -369,9 +386,6 @@
         }
         $element.find(settings.table.bodyRowSelector).remove();
         $element.append($rows);
-      },
-      row: function(rowIndex, record) {
-        return $('<tr></tr>');
       }
     };
 
