@@ -21,7 +21,7 @@
     th {
       background: #eee;
     }
-    #example-ul {
+    #example-ul, #ajax-ul {
       display: block;
       margin-top: 30px;
       border: solid 1px #ccc;
@@ -49,6 +49,22 @@
             ]
           }
         });
+
+        $('#ajax-ul').dynatable({
+          table: {
+            rowFilter: function(rowIndex, record) {
+              return $(
+                '<li class="row">This is my name: <span class="the-name">' + record.name + '</span> and this is my ID: <span class="the-id">' + record.id + '</span></div>'
+              );
+            },
+            bodyRowSelector: 'li.row'
+          },
+          dataset: {
+            ajax: true,
+            ajaxUrl: 'ajax_data.json',
+            records: []
+          }
+        });
     });
   </script>
 </head>
@@ -74,6 +90,9 @@
 
   <hr />
 
-  <ul id="example-ul">
-  </ul>
+  <ul id="example-ul"></ul>
+
+  <hr />
+
+  <ul id="ajax-ul"></ul>
 </body>
