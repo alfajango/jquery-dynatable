@@ -1,0 +1,36 @@
+<html>
+<head>
+  <title>Dynatable Demo</title>
+  <script src="../vendor/jquery-1.7.2.min.js" type="text/javascript"></script> 
+  <script src="../jquery.dynatable.js" type="text/javascript"></script>
+
+  <style>
+    /* Example Styles for Demo */
+  </style>
+
+  <script type="text/javascript">
+    $(document).ready( function() {
+      $('#example-table').dynatable();
+    });
+  </script>
+</head>
+<body>
+  <table id='example-table'>
+    <thead>
+      <tr>
+        <th>id</th><th>name</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>1</td><td>Caitlin</td>
+      </tr>
+      <tr>
+        <td>2</td><td>Steve</td>
+      </tr>
+      <tr>
+        <td>3</td><td>Cory</td>
+      </tr>
+    </tbody>
+  </table>
+</body>
