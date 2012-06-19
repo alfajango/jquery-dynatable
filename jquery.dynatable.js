@@ -181,8 +181,8 @@
       }
 
       if (settings.features.paginate) {
-        plugin.page.set(pageUrl ? pageUrl[1] : 1);
         if (perPageUrl) { plugin.perPage.set(perPageUrl[1]); }
+        plugin.page.set(pageUrl ? pageUrl[1] : 1);
         plugin.paginationLinks.attach();
 
         if (settings.features.perPageSelect) {
