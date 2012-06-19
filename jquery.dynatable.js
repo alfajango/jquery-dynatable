@@ -679,7 +679,7 @@
             var breakIndex = $.inArray(i, breaks),
                 nextBreak = breaks[breakIndex + 1];
             if (breakIndex > 0 && i !== 1 && nextBreak && nextBreak > (i + 1)) {
-              var $ellip = $('<span>&hellip;</span>');
+              var $ellip = $('<span class="dynatable-page-break">&hellip;</span>');
               $link = breakIndex < 2 ? $link.before($ellip) : $link.after($ellip);
             }
 
@@ -688,7 +688,7 @@
           if (settings.inputs.paginationPrev && i === 1) {
             var $prevLink = $('<a></a>',{
               html: settings.inputs.paginationPrev,
-              'class': pageLinkClass,
+              'class': pageLinkClass + ' dynatable-page-prev',
               'data-dynatable-page': page - 1
             });
             if (page === 1) { $prevLink.addClass(activePageClass); }
@@ -697,14 +697,18 @@
           if (settings.inputs.paginationNext && i === pages) {
             var $nextLink = $('<a></a>',{
               html: settings.inputs.paginationNext,
-              'class': pageLinkClass,
+              'class': pageLinkClass + ' dynatable-page-next',
               'data-dynatable-page': page + 1
             });
             if (page === pages) { $nextLink.addClass(activePageClass); }
             $link = $link.after($nextLink);
           }
 
-          $pageLinks.append($link.wrap('<li></li>'));
+          $link.each( function() {
+            $pageLinks.append( $('<li />', {
+              html: this
+            }) );
+          });
         }
 
         // only bind page handler to non-active pages
