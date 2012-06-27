@@ -219,6 +219,8 @@
     plugin.process = function(skipPushState) {
       var data = {};
 
+      $element.trigger('dynatable:beforeProcess', data);
+
       if (!$.isEmptyObject(settings.dataset.queries)) { data[settings.params.queries] = settings.dataset.queries; }
       // TODO: Wrap this in a try/rescue block to hide the processing indicator and indicate something went wrong if error
       plugin.processingIndicator.show();
@@ -282,6 +284,7 @@
           plugin.state.push(data);
         }
       }
+      $element.trigger('dynatable:afterProcess', data);
     };
 
     plugin.state = {
@@ -339,6 +342,8 @@
             rowFilter = settings.table.rowFilter,
             cellFilter = settings.table.cellFilter;
 
+        $element.trigger('dynatable:beforeUpdate', $rows);
+
         // loop through records
         $.each(settings.dataset.records, function(rowIndex, record){
           var $tr = rowFilter(rowIndex, record, columns, cellFilter);
@@ -386,6 +391,8 @@
         }
         $element.find(settings.table.bodyRowSelector).remove();
         $element.append($rows);
+
+        $element.trigger('dynatable:afterUpdate', $rows);
       }
     };
 
