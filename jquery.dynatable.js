@@ -66,13 +66,20 @@
             multisort: ['ctrlKey', 'shiftKey', 'metaKey'],
             page: null,
             queryEvent: 'blur change',
+            recordCountTarget: null,
             recordCountPlacement: 'after',
+            paginationLinkTarget: null,
             paginationLinkPlacement: 'after',
             paginationPrev: 'Previous',
             paginationNext: 'Next',
             paginationGap: [1,2,2,1],
+            searchTarget: null,
             searchPlacement: 'before',
-            perPagePlacement: 'before'
+            perPageTarget: null,
+            perPagePlacement: 'before',
+            perPageText: 'Show: ',
+            recordCountText: 'Showing ',
+            processingText: 'Processing...'
           },
           dataset: {
             ajax: false,
@@ -737,7 +744,8 @@
       attach: function() {
         // append page liks *after* live-event-binding so it doesn't need to
         // find and select all page links to bind event
-        $element[settings.inputs.paginationLinkPlacement](plugin.paginationLinks.create());
+        var $target = settings.inputs.paginationLinkTarget ? $(settings.inputs.paginationLinkTarget) : $element;
+        $target[settings.inputs.paginationLinkPlacement](plugin.paginationLinks.create());
       }
     };
 
@@ -767,7 +775,8 @@
         return $searchSpan;
       },
       attach: function() {
-        $element[settings.inputs.searchPlacement](plugin.search.create());
+        var $target = settings.inputs.searchTarget ? $(settings.inputs.searchTarget) : $element;
+        $target[settings.inputs.searchPlacement](plugin.search.create());
       }
     };
 
@@ -775,7 +784,7 @@
       create: function() {
         var $select = $('<select>', {
               id: 'dynatable-per-page-' + element.id,
-              'class': 'dynatable-per-page'
+              'class': 'dynatable-per-page-select'
             });
 
         $.each(settings.dataset.perPageOptions, function(index, number) {
@@ -788,10 +797,14 @@
           plugin.process();
         });
 
-        return $select.before("<span>Show: </span>");
+        return $('<span />', {
+          html: $select.before("<span class='dynatable-per-page-label'>" + settings.inputs.perPageText + "</span>"),
+          'class': 'dynatable-per-page'
+        });
       },
       attach: function() {
-        $element[settings.inputs.perPagePlacement](plugin.perPage.create());
+        var $target = settings.inputs.perPageTarget ? $(settings.inputs.perPageTarget) : $element;
+        $target[settings.inputs.perPagePlacement](plugin.perPage.create());
       },
       set: function(number) {
         plugin.page.set(1);
@@ -804,12 +817,12 @@
         var recordsShown = settings.dataset.records.length,
             recordsQueryCount = settings.dataset.queryRecordCount,
             recordsTotal = settings.dataset.totalRecordCount,
-            text = "Showing ",
+            text = settings.inputs.recordCountText,
             collection_name = settings.params.records;
 
         if (recordsShown < recordsQueryCount && settings.features.paginate) {
           var bounds = plugin.records.pageBounds();
-          text += (bounds[0] + 1) + " to " + bounds[1] + " of ";
+          text += "<span class='dynatable-record-bounds'>" + (bounds[0] + 1) + " to " + bounds[1] + "</span> of ";
         } else if (recordsShown === recordsQueryCount && settings.features.paginate) {
           text += recordsShown + " of ";
         }
@@ -821,18 +834,19 @@
         return $('<span></span>', {
                   id: 'dynatable-record-count-' + element.id,
                   'class': 'dynatable-record-count',
-                  text: text
+                  html: text
                 });
       },
       attach: function() {
-        $element[settings.inputs.recordCountPlacement](plugin.recordCount.create());
+        var $target = settings.inputs.recordCountTarget ? $(settings.inputs.recordCountTarget) : $element;
+        $target[settings.inputs.recordCountPlacement](plugin.recordCount.create());
       }
     };
 
     plugin.processingIndicator = {
       create: function() {
         var $processing = $('<div></div>', {
-              html: '<span>Processing...</span>',
+              html: '<span>' + settings.inputs.processingText + '</span>',
               id: 'dynatable-processing-' + element.id,
               'class': 'dynatable-processing',
               style: 'position: absolute; display: none;'
