@@ -1210,9 +1210,8 @@
         $.each(settings.params, function(attr, label) {
           // Skip over parameters matching attributes for disabled features (i.e. leave them untouched)
           if (
-            (!settings.features.search && attr == "queries") ||
-              (!settings.features.sort && attr == "sorts") ||
-                (!settings.features.paginate && plugin.utility.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
+            (!settings.features.sort && attr == "sorts") ||
+              (!settings.features.paginate && plugin.utility.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
           ) {
             return true;
           }
