@@ -1196,10 +1196,21 @@
         $.each(settings.params, function(attr, label) {
           // Skip over parameters matching attributes for disabled features (i.e. leave them untouched)
           if (
-            (!settings.features.search && attr == "queries") ||
-              (!settings.features.sort && attr == "sorts") ||
-                (!settings.features.paginate && plugin.utility.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
+            (!settings.features.sort && attr == "sorts") ||
+              (!settings.features.paginate && plugin.utility.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
           ) {
+            return true;
+          }
+          if (attr == "queries" && data[label]) {
+            var inputQueries = $.makeArray(settings.inputs.queries.map(function() { return $(this).attr('name') }));
+            $.each(data[label], function(key, value) {
+              if (plugin.utility.anyMatch(key, inputQueries, function(key, query) { return key == query; })) {
+                if (typeof urlOptions[label] == "undefined") {
+                  urlOptions[label] = {};
+                }
+                urlOptions[label][key] = value;
+              }
+            });
             return true;
           }
           if (data[label]) {
