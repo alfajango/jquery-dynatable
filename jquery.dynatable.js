@@ -946,7 +946,7 @@
       pageBounds: function() {
         var page = settings.dataset.page || 1,
             first = (page - 1) * settings.dataset.perPage,
-            last = first + Math.min(settings.dataset.perPage, settings.dataset.queryRecordCount);
+            last = Math.min(first + settings.dataset.perPage, settings.dataset.queryRecordCount);
         return [first,last];
       },
       // get initial recordset to populate table
