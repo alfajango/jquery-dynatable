@@ -1232,14 +1232,17 @@
           ) {
             return true;
           }
+
+          // For queries, we're going to handle each possible query parameter individually here instead of
+          // handling the entire queries object below, since we need to make sure that this is a query controlled by dynatable.
           if (attr == "queries" && data[label]) {
             var inputQueries = $.makeArray(settings.inputs.queries.map(function() { return $(this).attr('name') }));
-            $.each(data[label], function(key, value) {
-              if (plugin.utility.anyMatch(key, inputQueries, function(key, query) { return key == query; })) {
-                if (typeof urlOptions[label] == "undefined") {
-                  urlOptions[label] = {};
-                }
-                urlOptions[label][key] = value;
+            $.each(inputQueries, function(i, attr) {
+              if (data[label][attr]) {
+                if (typeof urlOptions[label] === 'undefined') { urlOptions[label] = {}; }
+                urlOptions[label][attr] = data[label][attr];
+              } else {
+                delete urlOptions[label][attr];
               }
             });
             return true;
