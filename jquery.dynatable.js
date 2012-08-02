@@ -1228,9 +1228,20 @@
           // because if the feature is turned off, then parameter name is a coincidence and it's unrelated to dynatable.
           if (
             (!settings.features.sort && attr == "sorts") ||
-              (!settings.features.paginate && plugin.utility.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; })) ||
-                (!settings.features.search && !settings.inputs.queries && attr == "queries")
+              (!settings.features.paginate && plugin.utility.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
           ) {
+            return true;
+          }
+          if (attr == "queries" && data[label]) {
+            var inputQueries = $.makeArray(settings.inputs.queries.map(function() { return $(this).attr('name') }));
+            $.each(data[label], function(key, value) {
+              if (plugin.utility.anyMatch(key, inputQueries, function(key, query) { return key == query; })) {
+                if (typeof urlOptions[label] == "undefined") {
+                  urlOptions[label] = {};
+                }
+                urlOptions[label][key] = value;
+              }
+            });
             return true;
           }
 
