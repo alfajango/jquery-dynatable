@@ -1185,15 +1185,23 @@
             var origV = v;
             k = m[1];
             v = {};
-            v[m[2]] = origV;
+
+            // If nested param ends in '][', then the regex above erroneously included half of a trailing '[]',
+            // which indicates the end-value is part of an array
+            if (m[2].substr(m[2].length-2) == '][') { // must use substr for IE to understand it
+              v[m[2].substr(0,m[2].length-2)] = [origV];
+            } else {
+              v[m[2]] = origV;
+            }
           }
 
           // If it is the first entry with this name
           if (typeof hash[k] === "undefined") {
-            if (k.substr(k.length-2) != '[]')  // not end with []. cannot use negative index as IE doesn't understand it
+            if (k.substr(k.length-2) != '[]') { // not end with []. cannot use negative index as IE doesn't understand it
               hash[k] = v;
-            else
+            } else {
               hash[k] = [v];
+            }
           // If subsequent entry with this name and not array
           } else if (typeof hash[k] === "string") {
             hash[k] = v;  // replace it
@@ -1214,8 +1222,10 @@
 
         urlOptions = plugin.utility.deserialize(urlString);
 
+        // Loop through each dynatable param and update the URL with it
         $.each(settings.params, function(attr, label) {
-          // Skip over parameters matching attributes for disabled features (i.e. leave them untouched)
+          // Skip over parameters matching attributes for disabled features (i.e. leave them untouched),
+          // because if the feature is turned off, then parameter name is a coincidence and it's unrelated to dynatable.
           if (
             (!settings.features.sort && attr == "sorts") ||
               (!settings.features.paginate && plugin.utility.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
@@ -1234,6 +1244,8 @@
             });
             return true;
           }
+
+          // If we havne't returned true by now, then we actually want to update the parameter in the URL
           if (data[label]) {
             urlOptions[label] = data[label];
           } else {
