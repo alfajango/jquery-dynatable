@@ -248,6 +248,7 @@
           dataType: settings.dataset.ajaxDataType,
           data: data,
           success: function(response) {
+            $element.trigger('dynatable:ajax:success', response);
             // Merge ajax results and meta-data into dynatables cached data
             plugin.records.updateFromJson(response);
             // update table with new records
