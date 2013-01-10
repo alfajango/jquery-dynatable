@@ -94,7 +94,7 @@
             page: null,
             perPage: 10,
             perPageOptions: [10,20,50,100],
-            sorts: null,
+            sorts: {},
             sortsKeys: null,
             sortTypes: {},
             records: null
@@ -198,7 +198,7 @@
       }
 
       if (settings.features.sort) {
-        settings.dataset.sorts = sortsUrl ? plugin.utility.deserialize(sortsUrl)[settings.params.sorts] : {};
+        settings.dataset.sorts = sortsUrl ? plugin.utility.deserialize(sortsUrl)[settings.params.sorts] : settings.dataset.sorts;
         settings.dataset.sortsKeys = sortsUrl ? plugin.utility.keysFromObject(settings.dataset.sorts) : [];
         plugin.sortHeaders.attach();
       }
