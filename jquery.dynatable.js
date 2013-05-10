@@ -734,9 +734,9 @@
 
         // only bind page handler to non-active pages
         var selector = '.' + pageLinkClass + ':not(.' + activePageClass + ')';
-        // kill any existing live-bindings so they don't stack up
-        $(selector).die('click.dynatable');
-        $(selector).live('click.dynatable', function(e) {
+        // kill any existing delegated-bindings so they don't stack up
+        $(document).undelegate(selector, 'click.dynatable');
+        $(document).delegate(selector, 'click.dynatable', function(e) {
           $this = $(this);
           $('#dynatable-pagination-links').find('.' + activePageClass).removeClass(activePageClass);
           $this.addClass(activePageClass);
@@ -749,7 +749,7 @@
         return $pageLinks;
       },
       attach: function() {
-        // append page liks *after* live-event-binding so it doesn't need to
+        // append page liks *after* delegate-event-binding so it doesn't need to
         // find and select all page links to bind event
         var $target = settings.inputs.paginationLinkTarget ? $(settings.inputs.paginationLinkTarget) : $element;
         $target[settings.inputs.paginationLinkPlacement](plugin.paginationLinks.create());
