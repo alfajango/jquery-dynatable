@@ -984,7 +984,7 @@
               if (! record['dynatable-sortable-text']) {
                 record['dynatable-sortable-text'] = {};
               }
-              record['dynatable-sortable-text'][attr] = $($.trim(value)).text();
+              record['dynatable-sortable-text'][attr] = $.trim($('<div></div>').html(value).text());
             }
 
             record[attr] = value;
@@ -1236,7 +1236,8 @@
           // For queries, we're going to handle each possible query parameter individually here instead of
           // handling the entire queries object below, since we need to make sure that this is a query controlled by dynatable.
           if (attr == "queries" && data[label]) {
-            var inputQueries = $.makeArray(settings.inputs.queries.map(function() { return $(this).attr('name') }));
+            var queries = settings.inputs.queries || [],
+                inputQueries = $.makeArray(queries.map(function() { return $(this).attr('name') }));
             $.each(inputQueries, function(i, attr) {
               if (data[label][attr]) {
                 if (typeof urlOptions[label] === 'undefined') { urlOptions[label] = {}; }
