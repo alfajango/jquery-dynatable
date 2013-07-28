@@ -197,6 +197,9 @@
         }
       }
 
+      // TODO: Figure out how to do initial sort from URL for custom
+      // sort functions (i.e. they don't exist in the sorts.functions
+      // object yet.
       if (settings.features.sort) {
         settings.dataset.sorts = sortsUrl ? plugin.utility.deserialize(sortsUrl)[settings.params.sorts] : {};
         settings.dataset.sortsKeys = sortsUrl ? plugin.utility.keysFromObject(settings.dataset.sorts) : [];
