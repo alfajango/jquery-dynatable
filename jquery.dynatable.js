@@ -92,7 +92,7 @@
             queries: null,
             queryRecordCount: null,
             page: null,
-            perPage: 10,
+            perPageDefault: 10,
             perPageOptions: [10,20,50,100],
             sorts: null,
             sortsKeys: null,
@@ -188,7 +188,11 @@
       }
 
       if (settings.features.paginate) {
-        if (perPageUrl) { plugin.perPage.set(perPageUrl[1]); }
+        if (perPageUrl) {
+          plugin.perPage.set(perPageUrl[1]);
+        } else {
+          plugin.perPage.set(settings.dataset.perPageDefault);
+        }
         plugin.page.set(pageUrl ? pageUrl[1] : 1);
         plugin.paginationLinks.attach();
 
@@ -1240,8 +1244,10 @@
           }
 
           // Delete perPage from url params if default perPage value
-          if (attr === "perPage" && urlOptions[label] && data[label] == settings.dataset.perPage) {
-            delete urlOptions[label];
+          if (attr === "perPage" && data[label] == settings.dataset.perPageDefault) {
+            if (urlOptions[label]) {
+              delete urlOptions[label];
+            }
             return true;
           }
 
