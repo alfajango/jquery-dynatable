@@ -807,9 +807,8 @@
         });
 
         return $('<span />', {
-          html: $select.before("<span class='dynatable-per-page-label'>" + settings.inputs.perPageText + "</span>"),
           'class': 'dynatable-per-page'
-        });
+        }).append("<span class='dynatable-per-page-label'>" + settings.inputs.perPageText + "</span>").append($select);
       },
       attach: function() {
         var $target = settings.inputs.perPageTarget ? $(settings.inputs.perPageTarget) : $element;
