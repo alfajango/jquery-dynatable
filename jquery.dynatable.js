@@ -596,7 +596,7 @@
             return plugin.queries.functions[query](record, value) ? record : null;
           });
         });
-        settings.dataset.queryRecordCount = settings.dataset.records.length;
+        settings.dataset.queryRecordCount = plugin.records.count();
       },
       // Shortcut for performing simple query from built-in search
       runSearch: function(q) {
@@ -690,7 +690,7 @@
               html: i,
               'class': pageLinkClass,
               'data-dynatable-page': i
-            });
+            }).appendTo($pageLinks);
 
             if (page == i) { $link.addClass(activePageClass); }
 
@@ -726,21 +726,17 @@
             if (page === pages) { $nextLink.addClass(activePageClass); }
             $link = $link.after($nextLink);
           }
-
-          $link.each( function() {
-            $pageLinks.append( $('<li />', {
-              html: this
-            }) );
-          });
         }
 
+        $pageLinks.children().wrap('<li></li>');
+
         // only bind page handler to non-active pages
-        var selector = '.' + pageLinkClass + ':not(.' + activePageClass + ')';
+        var selector = '#dynatable-pagination-links-' + element.id + ' .' + pageLinkClass + ':not(.' + activePageClass + ')';
         // kill any existing delegated-bindings so they don't stack up
         $(document).undelegate(selector, 'click.dynatable');
         $(document).delegate(selector, 'click.dynatable', function(e) {
           $this = $(this);
-          $('#dynatable-pagination-links').find('.' + activePageClass).removeClass(activePageClass);
+          $this.closest('.dynatable-pagination-links').find('.' + activePageClass).removeClass(activePageClass);
           $this.addClass(activePageClass);
 
           plugin.page.set($this.data('dynatable-page'));
@@ -823,7 +819,7 @@
 
     plugin.recordCount = {
       create: function() {
-        var recordsShown = settings.dataset.records.length,
+        var recordsShown = plugin.records.count(),
             recordsQueryCount = settings.dataset.queryRecordCount,
             recordsTotal = settings.dataset.totalRecordCount,
             text = settings.inputs.recordCountText,
@@ -1232,6 +1228,20 @@
             (!settings.features.sort && attr == "sorts") ||
               (!settings.features.paginate && plugin.utility.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
           ) {
+            return true;
+          }
+
+          // Delete page and offset from url params if on page 1 (default)
+          if ((attr === "page" || attr === "offset") && data["page"] === 1) {
+            if (urlOptions[label]) {
+              delete urlOptions[label];
+            }
+            return true;
+          }
+
+          // Delete perPage from url params if default perPage value
+          if (attr === "perPage" && urlOptions[label] && data[label] == settings.dataset.perPage) {
+            delete urlOptions[label];
             return true;
           }
 
