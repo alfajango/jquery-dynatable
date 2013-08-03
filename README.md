@@ -19,4 +19,5 @@ TODO:
   multiple pushState-enabled instances on one page.
 * Refactor using prototype to abstract dynatable-global functions to
   improve memory efficiency for multiple instances on one page.
-* Implement configurable sorting algorithm.
+* Implement configurable sorting algorithm (see
+  [JS Merge Sort](http://en.literateprograms.org/Merge_sort_%28JavaScript%29) and [Sorting Table](http://blog.vjeux.com/2010/javascript/javascript-sorting-table.html)).
