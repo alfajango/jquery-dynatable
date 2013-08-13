@@ -1,7 +1,7 @@
 {
   "name": "Dynatable",
   "description": "A funner, semantic, HTML5+JSON, interactive table plugin.",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "keywords": [
     "table",
     "datatables",
@@ -44,5 +44,5 @@
       "url": "http://www.gnu.org/licenses/gpl.html"
     }
   ],
-  "homepage": "https://github.com/jangosteve/jquery-dynatable"
+  "homepage": "http://os.alfajango.com/dynatable"
 }

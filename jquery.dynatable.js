@@ -1,5 +1,5 @@
 /*
- * jQuery Dynatable plugin 0.0.2
+ * jQuery Dynatable plugin 0.0.3
  *
  * Copyright (c) 2013 Steve Schwartz (JangoSteve)
  *
@@ -7,7 +7,7 @@
  *   http://www.opensource.org/licenses/mit-license.php
  *   http://www.gnu.org/licenses/gpl.html
  *
- * Date: Thu May 09 10:15:00 2013 -0500
+ * Date: Tue Aug 13 12:50:00 2013 -0500
  */
 //
 
