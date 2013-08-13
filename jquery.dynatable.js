@@ -12,13 +12,24 @@
 //
 
 (function($) {
-  var globalDefaults = {};
+  // Object.create support test, and fallback for browsers without it
+  if ( typeof Object.create !== "function" ) {
+    Object.create = function (o) {
+      function F() {}
+      F.prototype = o;
+      return new F();
+    };
+  }
+
+  var globalDefaults, dynatable, dt, model, models = {}, utility;
+
+  globalDefaults = {};
 
   $.dynatableSetup = function(options) {
     $.extend(true, globalDefaults, options);
   }
 
-  var dt, dynatable = dt = {
+  dynatable = dt = {
     defaults: {
       features: {
         paginate: true,
@@ -88,12 +99,12 @@
         ajaxMethod: 'GET',
         ajaxDataType: 'json',
         totalRecordCount: null,
-        queries: null,
+        queries: {},
         queryRecordCount: null,
         page: null,
         perPageDefault: 10,
         perPageOptions: [10,20,50,100],
-        sorts: null,
+        sorts: {},
         sortsKeys: null,
         sortTypes: {},
         records: null
@@ -114,90 +125,32 @@
       }
     },
 
-    init: function(element, options) {
+    init: function(options, element) {
       this.settings = this._extend(options);
       this.element = element;
       this.$element = $(element);
+      this._build();
+      return this;
     },
 
     _build: function() {
-      this.Records.ProcessingIndicator.attach();
-
-      settings.table.columns = [];
-      if ( $element.is('table') ) {
-        this.Dom.Columns.getFromTable();
-      }
-      if ( settings.dataset.records === null && !settings.dataset.ajax ) {
-        settings.dataset.records = this.records.getFromTable();
-      }
-
-      if (!settings.dataset.queryRecordCount) {
-        settings.dataset.queryRecordCount = this.records.count();
-      }
-
-      if (!settings.dataset.totalRecordCount){
-        settings.dataset.totalRecordCount = settings.dataset.queryRecordCount;
-      }
-
-      var sortsUrl = window.location.search.match(new RegExp(settings.params.sorts + '[^&=]*=[^&]*', 'g')),
-          queriesUrl = window.location.search.match(new RegExp(settings.params.queries + '[^&=]*=[^&]*', 'g')),
-          pageUrl = window.location.search.match(new RegExp(settings.params.page + '=([^&]*)')),
-          perPageUrl = window.location.search.match(new RegExp(settings.params.perPage + '=([^&]*)'));
-
-      settings.dataset.queries = queriesUrl ? this.Utility.deserialize(queriesUrl)[settings.params.queries] : {};
-      if (settings.dataset.queries === "") { settings.dataset.queries = {}; }
-
-      if (settings.features.recordCount) {
-        this.Records.Count.attach();
-      }
-
-      if (settings.features.search) {
-        this.Inputs.Search.attach();
-      }
-
-      // Create cache of original full recordset (unpaginated and unqueried)
-      if (!settings.dataset.ajax) {
-        settings.dataset.originalRecords = $.extend(true, [], settings.dataset.records);
-      }
-
-      if (settings.features.paginate) {
-        if (perPageUrl) { this.perPage.set(perPageUrl[1]); }
-        if (perPageUrl) {
-          this.Pagination.PerPage.set(perPageUrl[1]);
-        } else {
-          this.Pagination.PerPage.set(settings.dataset.perPageDefault);
-        }
-        this.Pagination.Page.set(pageUrl ? pageUrl[1] : 1);
-        this.Pagination.Links.attach();
-
-        if (settings.features.perPageSelect) {
-          this.Pagination.PerPage.attach();
+      for (model in models) {
+        if (models.hasOwnProperty(model)) {
+          this._checkAndInitModel(model);
         }
       }
 
-      if (settings.features.sort) {
-        settings.dataset.sorts = sortsUrl ? this.Utility.deserialize(sortsUrl)[settings.params.sorts] : {};
-        settings.dataset.sortsKeys = sortsUrl ? this.Utility.keysFromObject(settings.dataset.sorts) : [];
-        this.Sorts.Headers.attach();
-      }
+      this.$element.trigger('dynatable:init', this);
 
-      if (settings.inputs.queries) {
-        this.Queries.setupInputs();
-      }
-
-      this.$element.trigger('dynatable:init', dynatable);
-
-      if (!settings.dataset.ajax || (settings.dataset.ajax && settings.dataset.ajaxOnLoad) || settings.features.paginate) {
+      if (!this.settings.dataset.ajax || (this.settings.dataset.ajax && this.settings.dataset.ajaxOnLoad) || this.settings.features.paginate) {
         this.process();
       }
+    },
 
-      // Check if pushState option is true, and if browser supports it
-      if (settings.features.pushState && history.pushState) {
-        window.onpopstate = function(event) {
-          if (event.state && event.state.dynatable) {
-            this.State.pop(event);
-          }
-        }
+    _checkAndInitModel: function(model) {
+      var modelInstance = this[model] = Object.create(models[model]).setInstance(this);
+      if (modelInstance.initOnLoad()) {
+        modelInstance.init();
       }
     },
 
@@ -208,26 +161,26 @@
       if (options) {
         if (options.inputs) {
           if (options.inputs.multisort) {
-            defaults.inputs.multisort = undefined;
+            this.defaults.inputs.multisort = undefined;
             if (globalDefaults.inputs && globalDefaults.inputs.multisort) {
               globalDefaults.inputs.multisort = undefined;
             }
           }
           if (options.inputs.paginationGap) {
-            defaults.inputs.paginationGap = undefined;
+            this.defaults.inputs.paginationGap = undefined;
             if (globalDefaults.inputs && globalDefaults.inputs.paginationGap) {
               globalDefaults.inputs.paginationGap = undefined;
             }
           }
         }
         if (options.dataset && options.dataset.perPageOptions) {
-          defaults.dataset.perPageOptions = undefined;
+          this.defaults.dataset.perPageOptions = undefined;
           if (globalDefaults.dataset && globalDefaults.dataset.perPageOptions) {
             globalDefaults.dataset.perPageOptions = undefined;
           }
         }
       }
-      $.extend(true, {}, defaults, globalDefaults, options);
+      return $.extend(true, {}, this.defaults, globalDefaults, options);
     },
 
     // if non-ajax, executes queries and sorts on in-page data
@@ -235,118 +188,138 @@
     process: function(skipPushState) {
       var data = {};
 
-      $element.trigger('dynatable:beforeProcess', data);
+      this.$element.trigger('dynatable:beforeProcess', data);
 
-      if (!$.isEmptyObject(settings.dataset.queries)) { data[settings.params.queries] = settings.dataset.queries; }
+      if (!$.isEmptyObject(this.settings.dataset.queries)) { data[this.settings.params.queries] = this.settings.dataset.queries; }
       // TODO: Wrap this in a try/rescue block to hide the processing indicator and indicate something went wrong if error
-      this.Records.ProcessingIndicator.show();
+      this.processingIndicator.show();
 
-      if (settings.features.sort && !$.isEmptyObject(settings.dataset.sorts)) { data[settings.params.sorts] = settings.dataset.sorts; }
-      if (settings.features.paginate && settings.dataset.page) {
-        var page = settings.dataset.page,
-            perPage = settings.dataset.perPage;
-        data[settings.params.page] = page;
-        data[settings.params.perPage] = perPage;
-        data[settings.params.offset] = (page - 1) * perPage;
+      if (this.settings.features.sort && !$.isEmptyObject(this.settings.dataset.sorts)) { data[this.settings.params.sorts] = this.settings.dataset.sorts; }
+      if (this.settings.features.paginate && this.settings.dataset.page) {
+        var page = this.settings.dataset.page,
+            perPage = this.settings.dataset.perPage;
+        data[this.settings.params.page] = page;
+        data[this.settings.params.perPage] = perPage;
+        data[this.settings.params.offset] = (page - 1) * perPage;
       }
-      if (settings.dataset.ajaxData) { $.extend(data, settings.dataset.ajaxData); }
+      if (this.settings.dataset.ajaxData) { $.extend(data, this.settings.dataset.ajaxData); }
 
-      if (settings.dataset.ajax) {
+      if (this.settings.dataset.ajax) {
         var options = {
-          type: settings.dataset.ajaxMethod,
-          dataType: settings.dataset.ajaxDataType,
+          type: this.settings.dataset.ajaxMethod,
+          dataType: this.settings.dataset.ajaxDataType,
           data: data,
           success: function(response) {
-            $element.trigger('dynatable:ajax:success', response);
+            this.$element.trigger('dynatable:ajax:success', response);
             // Merge ajax results and meta-data into dynatables cached data
             this.records.updateFromJson(response);
             // update table with new records
-            this.Dom.update();
+            this.dom.update();
 
-            if (settings.features.pushState && !skipPushState && history.pushState) {
-              this.State.push(data);
+            if (this.settings.features.pushState && !skipPushState && history.pushState) {
+              this.state.push(data);
             }
           },
           complete: function() {
-            this.Records.ProcessingIndicator.hide();
+            this.processingIndicator.hide();
           }
         };
         // Do not pass url to `ajax` options if blank
-        if (settings.dataset.ajaxUrl) {
-          options.url = settings.dataset.ajaxUrl;
+        if (this.settings.dataset.ajaxUrl) {
+          options.url = this.settings.dataset.ajaxUrl;
 
         // If ajaxUrl is blank, then we're using the current page URL,
         // we need to strip out any query, sort, or page data controlled by dynatable
         // that may have been in URL when page loaded, so that it doesn't conflict with
         // what's passed in with the data ajax parameter
         } else {
-          options.url = this.Utility.refreshQueryString(window.location.href, {});
+          options.url = utility.refreshQueryString(window.location.href, {}, this.settings);
         }
-        if (settings.dataset.ajaxCache !== null) { options.cache = settings.dataset.ajaxCache; }
+        if (this.settings.dataset.ajaxCache !== null) { options.cache = this.settings.dataset.ajaxCache; }
 
         $.ajax(options);
       } else {
         this.records.resetOriginal();
-        this.Queries.run();
-        if (settings.features.sort) {
+        this.queries.run();
+        if (this.settings.features.sort) {
           this.records.sort();
         }
-        if (settings.features.paginate) {
+        if (this.settings.features.paginate) {
           this.records.paginate();
         }
-        this.Dom.update();
-        this.Records.ProcessingIndicator.hide();
+        this.dom.update();
+        this.processingIndicator.hide();
 
-        if (settings.features.pushState && !skipPushState && history.pushState) {
-          this.State.push(data);
+        if (this.settings.features.pushState && !skipPushState && history.pushState) {
+          this.state.push(data);
         }
       }
-      $element.trigger('dynatable:afterProcess', data);
+      this.$element.trigger('dynatable:afterProcess', data);
     }
   };
 
-  dt.Dom = {
+  model = {
+    extend: function(props) {
+      for (prop in props) {
+        if (props.hasOwnProperty(prop)) {
+          this[prop] = props[prop];
+        }
+      }
+      return this;
+    },
+    setInstance: function(instance) {
+      this.obj = instance;
+      return this;
+    },
+    initOnLoad: function() {
+      return true;
+    },
+    init: function() {}
+  };
+
+  models.dom = Object.create(model).extend({
     // update table contents with new records array
     // from query (whether ajax or not)
     update: function() {
-      var $rows = $(),
-          columns = settings.table.columns,
-          rowFilter = settings.table.rowFilter,
-          cellFilter = settings.table.cellFilter;
+      var _this = this,
+          $rows = $(),
+          columns = this.obj.settings.table.columns,
+          rowFilter = this.obj.settings.table.rowFilter,
+          cellFilter = this.obj.settings.table.cellFilter;
 
-      $element.trigger('dynatable:beforeUpdate', $rows);
+      this.obj.$element.trigger('dynatable:beforeUpdate', $rows);
 
       // loop through records
-      $.each(settings.dataset.records, function(rowIndex, record){
+      $.each(this.obj.settings.dataset.records, function(rowIndex, record){
         var $tr = rowFilter(rowIndex, record, columns, cellFilter);
         $rows = $rows.add($tr);
       });
 
       // Appended dynatable interactive elements
-      if (settings.features.recordCount) {
-        $('#dynatable-record-count-' + element.id).replaceWith(dt.Records.Count.create());
+      if (this.obj.settings.features.recordCount) {
+        $('#dynatable-record-count-' + this.obj.element.id).replaceWith(this.obj.recordsCount.create());
       }
-      if (settings.features.paginate) {
-        $('#dynatable-pagination-links-' + element.id).replaceWith(dt.Pagination.Links.create());
-        if (settings.features.perPageSelect) {
-          $('#dynatable-per-page-' + element.id).val(parseInt(settings.dataset.perPage));
+      if (this.obj.settings.features.paginate) {
+        $('#dynatable-pagination-links-' + this.obj.element.id).replaceWith(this.obj.paginationLinks.create());
+        if (this.obj.settings.features.perPageSelect) {
+          $('#dynatable-per-page-' + this.obj.element.id).val(parseInt(this.obj.settings.dataset.perPage));
         }
       }
 
       // Sort headers functionality
-      if (settings.features.sort) {
-        dt.Sorts.Headers.removeAllArrows();
+      if (this.obj.settings.features.sort && columns) {
+        this.obj.sortsHeaders.removeAllArrows();
         $.each(columns, function() {
           var column = this,
-              sortedByColumn = dt.Utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; }),
-              value = settings.dataset.sorts[column.sorts[0]];
+              sortedByColumn = utility.allMatch(_this.obj.settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; }),
+              value = _this.obj.settings.dataset.sorts[column.sorts[0]];
 
           if (sortedByColumn) {
-            $element.find('[data-dynatable-column="' + column.id + '"]').find('.dynatable-sort-header').each(function(){
+            _this.obj.$element.find('[data-dynatable-column="' + column.id + '"]').find('.dynatable-sort-header').each(function(){
               if (value == 1) {
-                dt.Sorts.Headers.appendArrowUp($(this));
+                _this.obj.sortsHeaders.appendArrowUp($(this));
               } else {
-                dt.Sorts.Headers.appendArrowDown($(this));
+                _this.obj.sortsHeaders.appendArrowDown($(this));
               }
             });
           }
@@ -354,36 +327,44 @@
       }
 
       // Query search functionality
-      if (settings.inputs.queries) {
-        settings.inputs.Queries.each(function() {
+      if (this.obj.settings.inputs.queries) {
+        this.obj.settings.inputs.queries.each(function() {
           var $this = $(this),
-              q = settings.dataset.queries[$this.data('dynatable-query')];
+              q = _this.obj.settings.dataset.queries[$this.data('dynatable-query')];
           $(this).val(q || '');
         });
       }
-      $element.find(settings.table.bodyRowSelector).remove();
-      $element.append($rows);
+      this.obj.$element.find(this.obj.settings.table.bodyRowSelector).remove();
+      this.obj.$element.append($rows);
 
-      $element.trigger('dynatable:afterUpdate', $rows);
+      this.obj.$element.trigger('dynatable:afterUpdate', $rows);
     }
-  };
+  });
 
-  dt.Dom.Columns = {
+  models.domColumns = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.$element.is('table');
+    },
+    init: function() {
+      this.obj.settings.table.columns = [];
+      this.getFromTable();
+    },
     // initialize table[columns] array
     getFromTable: function() {
-      var $columns = $element.find(settings.table.headRowSelector).children('th,td');
+      var _this = this,
+          $columns = this.obj.$element.find(this.obj.settings.table.headRowSelector).children('th,td');
       if ($columns.length) {
         $columns.each(function(index){
-          this.add($(this), index, true);
+          _this.add($(this), index, true);
         });
       } else {
-        return $.error("Couldn't find any columns headers in '" + settings.table.headRowSelector + " th,td'. If your header row is different, specify the selector in the table: headRowSelector option.");
+        return $.error("Couldn't find any columns headers in '" + this.obj.settings.table.headRowSelector + " th,td'. If your header row is different, specify the selector in the table: headRowSelector option.");
       }
     },
     add: function($column, position, skipAppend, skipUpdate) {
-      var columns = settings.table.columns,
+      var columns = this.obj.settings.table.columns,
           label = $column.text(),
-          id = $column.data('dynatable-column') || dt.Utility.normalizeText(label),
+          id = $column.data('dynatable-column') || utility.normalizeText(label, this.obj.settings.table.defaultColumnIdStyle),
           dataSorts = $column.data('dynatable-sorts'),
           sorts = dataSorts ? $.map(dataSorts.split(','), function(text) { return $.trim(text); }) : [id];
 
@@ -397,8 +378,8 @@
         index: position,
         label: label,
         id: id,
-        dataFilter: settings.filters[id] || this.defaultFilter,
-        dataUnfilter: settings.unfilters[id] || this.defaultUnfilter,
+        dataFilter: this.obj.settings.filters[id] || this.defaultFilter,
+        dataUnfilter: this.obj.settings.unfilters[id] || this.defaultUnfilter,
         sorts: sorts,
         hidden: $column.css('display') === 'none',
         textAlign: $column.css('text-align')
@@ -408,12 +389,12 @@
       $column
         .attr('data-dynatable-column', id)
         .addClass('dynatable-head');
-      if (settings.table.headRowClass) { $column.addClass(settings.table.headRowClass); }
+      if (this.obj.settings.table.headRowClass) { $column.addClass(this.obj.settings.table.headRowClass); }
 
       // Append column header to table
       if (!skipAppend) {
         var domPosition = position + 1,
-            $sibling = $element.find(settings.table.headRowSelector)
+            $sibling = this.obj.$element.find(this.obj.settings.table.headRowSelector)
               .children('th:nth-child(' + domPosition + '),td:nth-child(' + domPosition + ')').first(),
             columnsAfter = columns.slice(position + 1, columns.length);
 
@@ -421,10 +402,10 @@
           $sibling.before($column);
         // sibling column doesn't yet exist (maybe this is the last column in the header row)
         } else {
-          $element.find(settings.table.headRowSelector).append($column);
+          this.obj.$element.find(this.obj.settings.table.headRowSelector).append($column);
         }
 
-        dt.Sorts.Headers.attachOne($column.get());
+        this.obj.sortsHeaders.attachOne($column.get());
 
         // increment the index of all columns after this one that was just inserted
         if (columnsAfter.length) {
@@ -434,14 +415,14 @@
         }
 
         if (!skipUpdate) {
-          dt.Dom.update();
+          this.obj.dom.update();
         }
       }
 
       return dt;
     },
     remove: function(columnIndexOrId) {
-      var columns = settings.table.columns,
+      var columns = this.obj.settings.table.columns,
           length = columns.length;
 
       if (typeof(columnIndexOrId) === "number") {
@@ -461,21 +442,21 @@
         }
       }
 
-      dt.Dom.update();
+      this.obj.dom.update();
     },
     removeFromTable: function(columnId) {
-      $element.find(settings.table.headRowSelector).children('[data-dynatable-column="' + columnId + '"]').first()
+      this.obj.$element.find(this.obj.settings.table.headRowSelector).children('[data-dynatable-column="' + columnId + '"]').first()
         .remove();
     },
     removeFromArray: function(index) {
-      var columns = settings.table.columns;
+      var columns = this.obj.settings.table.columns;
       columns.splice(index, 1);
       $.each(columns.slice(index, columns.length), function() {
         this.index -= 1;
       });
     },
     defaultFilter: function(record) {
-      // `this` is the column object in settings.columns
+      // `this` is the column object in this.obj.settings.columns
       // TODO: automatically convert common types, such as arrays and objects, to string
       return record[this.id];
     },
@@ -489,55 +470,73 @@
     attachGeneratedAttributes: function($cell) {
       // Use increment to create unique column name that is the same each time the page is reloaded,
       // in order to avoid errors with mismatched attribute names when loading cached `dataset.records` array
-      var increment = $element.find(settings.table.headRowSelector).children('th[data-dynatable-generated]').length;
+      var increment = this.obj.$element.find(this.obj.settings.table.headRowSelector).children('th[data-dynatable-generated]').length;
       return $cell
-        .attr('data-dynatable-column', 'dynatable-generated-' + increment) //+ dt.Utility.randomHash(),
+        .attr('data-dynatable-column', 'dynatable-generated-' + increment) //+ utility.randomHash(),
         .attr('data-dynatable-no-sort', 'true')
         .attr('data-dynatable-generated', increment);
     }
-  };
+  });
 
-  dt.Records = {
+  models.records = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.settings.dataset.records === null && !this.obj.settings.dataset.ajax;
+    },
+    init: function() {
+      this.obj.settings.dataset.records = this.getFromTable();
+
+      if (!this.obj.settings.dataset.queryRecordCount) {
+        this.obj.settings.dataset.queryRecordCount = this.count();
+      }
+
+      if (!this.obj.settings.dataset.totalRecordCount){
+        this.obj.settings.dataset.totalRecordCount = this.obj.settings.dataset.queryRecordCount;
+      }
+
+      // Create cache of original full recordset (unpaginated and unqueried)
+      this.obj.settings.dataset.originalRecords = $.extend(true, [], this.obj.settings.dataset.records);
+    },
     // merge ajax response json with cached data including
     // meta-data and records
     updateFromJson: function(data) {
       var records;
-      if (settings.params.records === "_root") {
+      if (this.obj.settings.params.records === "_root") {
         records = data;
-      } else if (settings.params.records in data) {
-        records = data[settings.params.records];
+      } else if (this.obj.settings.params.records in data) {
+        records = data[this.obj.settings.params.records];
       }
-      if (settings.params.record) {
+      if (this.obj.settings.params.record) {
         var len = records.length - 1;
         for (var i = 0; i < len; i++) {
-          records[i] = records[i][settings.params.record];
+          records[i] = records[i][this.obj.settings.params.record];
         }
       }
-      if (settings.params.queryRecordCount in data) {
-        settings.dataset.queryRecordCount = data[settings.params.queryRecordCount];
+      if (this.obj.settings.params.queryRecordCount in data) {
+        this.obj.settings.dataset.queryRecordCount = data[this.obj.settings.params.queryRecordCount];
       }
-      if (settings.params.totalRecordCount in data) {
-        settings.dataset.totalRecordCount = data[settings.params.totalRecordCount];
+      if (this.obj.settings.params.totalRecordCount in data) {
+        this.obj.settings.dataset.totalRecordCount = data[this.obj.settings.params.totalRecordCount];
       }
-      settings.dataset.records = records;
+      this.obj.settings.dataset.records = records;
     },
     // For really advanced sorting,
     // see http://james.padolsey.com/javascript/sorting-elements-with-jquery/
     sort: function() {
-      var sort = [].sort,
-          sorts = settings.dataset.sorts,
-          sortsKeys = settings.dataset.sortsKeys,
-          sortTypes = settings.dataset.sortTypes;
+      var _this = this,
+          sort = [].sort,
+          sorts = this.obj.settings.dataset.sorts,
+          sortsKeys = this.obj.settings.dataset.sortsKeys,
+          sortTypes = this.obj.settings.dataset.sortTypes;
 
       var sortFunction = function(a, b) {
         var comparison;
         if ($.isEmptyObject(sorts)) {
-          comparison = dt.Sorts.functions['originalPlacement'](a, b);
+          comparison = _this.obj.sorts.functions['originalPlacement'](a, b);
         } else {
           $.each(sortsKeys, function(index, attr) {
             var direction = sorts[attr],
-                sortType = sortTypes[attr] || dt.Sorts.guessType(a, b, attr);
-            comparison = dt.Sorts.functions[sortType](a, b, attr, direction);
+                sortType = sortTypes[attr] || _this.obj.sorts.guessType(a, b, attr);
+            comparison = _this.obj.sorts.functions[sortType](a, b, attr, direction);
             // Don't need to sort any further unless this sort is a tie between a and b,
             // so return false to break the $.each() loop unless tied
             return comparison == 0;
@@ -546,29 +545,30 @@
         return comparison;
       }
 
-      return sort.call(settings.dataset.records, sortFunction);
+      return sort.call(this.obj.settings.dataset.records, sortFunction);
     },
     paginate: function() {
       var bounds = this.pageBounds(),
           first = bounds[0], last = bounds[1];
-      settings.dataset.records = settings.dataset.records.slice(first, last);
+      this.obj.settings.dataset.records = this.obj.settings.dataset.records.slice(first, last);
     },
     resetOriginal: function() {
-      settings.dataset.records = $.extend(true, [], settings.dataset.originalRecords);
+      this.obj.settings.dataset.records = $.extend(true, [], this.obj.settings.dataset.originalRecords);
     },
     pageBounds: function() {
-      var page = settings.dataset.page || 1,
-          first = (page - 1) * settings.dataset.perPage,
-          last = Math.min(first + settings.dataset.perPage, settings.dataset.queryRecordCount);
+      var page = this.obj.settings.dataset.page || 1,
+          first = (page - 1) * this.obj.settings.dataset.perPage,
+          last = Math.min(first + this.obj.settings.dataset.perPage, this.obj.settings.dataset.queryRecordCount);
       return [first,last];
     },
     // get initial recordset to populate table
     // if ajax, call ajaxUrl
     // otherwise, initialize from in-table records
     getFromTable: function() {
-      var records = [],
-          columns = settings.table.columns,
-          tableRecords = $element.find(settings.table.bodyRowSelector);
+      var _this = this,
+          records = [],
+          columns = this.obj.settings.table.columns,
+          tableRecords = this.obj.$element.find(this.obj.settings.table.bodyRowSelector);
 
       tableRecords.each(function(index){
         var record = {};
@@ -578,7 +578,7 @@
             // Header cell didn't exist for this column, so let's generate and append
             // a new header cell with a randomly generated name (so we can store and
             // retrieve the contents of this column for each record)
-            dt.Dom.Columns.add(dt.Dom.Columns.generate(), columns.length, false, true); // don't skipAppend, do skipUpdate
+            _this.obj.domColumns.add(_this.obj.domColumns.generate(), columns.length, false, true); // don't skipAppend, do skipUpdate
           }
           var value = columns[index].dataUnfilter(this, record),
               attr = columns[index].id;
@@ -597,8 +597,8 @@
         });
         // Allow configuration function which alters record based on attributes of
         // table row (e.g. from html5 data- attributes)
-        if (typeof(settings.table.rowUnfilter) === "function") {
-          settings.table.rowUnfilter(index, this, record);
+        if (typeof(_this.obj.settings.table.rowUnfilter) === "function") {
+          _this.obj.settings.table.rowUnfilter(index, this, record);
         }
         records.push(record);
       });
@@ -606,22 +606,28 @@
     },
     // count records from table
     count: function() {
-      return settings.dataset.records.length;
+      return this.obj.settings.dataset.records.length;
     }
-  };
+  });
 
-  dt.Records.Count = {
+  models.recordsCount = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.settings.features.recordCount;
+    },
+    init: function() {
+      this.attach();
+    },
     create: function() {
-      var recordsShown = dt.Records.count(),
-          recordsQueryCount = settings.dataset.queryRecordCount,
-          recordsTotal = settings.dataset.totalRecordCount,
-          text = settings.inputs.recordCountText,
-          collection_name = settings.params.records;
+      var recordsShown = this.obj.records.count(),
+          recordsQueryCount = this.obj.settings.dataset.queryRecordCount,
+          recordsTotal = this.obj.settings.dataset.totalRecordCount,
+          text = this.obj.settings.inputs.recordCountText,
+          collection_name = this.obj.settings.params.records;
 
-      if (recordsShown < recordsQueryCount && settings.features.paginate) {
-        var bounds = dt.records.pageBounds();
+      if (recordsShown < recordsQueryCount && this.obj.settings.features.paginate) {
+        var bounds = this.obj.records.pageBounds();
         text += "<span class='dynatable-record-bounds'>" + (bounds[0] + 1) + " to " + bounds[1] + "</span> of ";
-      } else if (recordsShown === recordsQueryCount && settings.features.paginate) {
+      } else if (recordsShown === recordsQueryCount && this.obj.settings.features.paginate) {
         text += recordsShown + " of ";
       }
       text += recordsQueryCount + " " + collection_name;
@@ -630,22 +636,25 @@
       }
 
       return $('<span></span>', {
-                id: 'dynatable-record-count-' + element.id,
+                id: 'dynatable-record-count-' + this.obj.element.id,
                 'class': 'dynatable-record-count',
                 html: text
               });
     },
     attach: function() {
-      var $target = settings.inputs.recordCountTarget ? $(settings.inputs.recordCountTarget) : $element;
-      $target[settings.inputs.recordCountPlacement](this.create());
+      var $target = this.obj.settings.inputs.recordCountTarget ? $(this.obj.settings.inputs.recordCountTarget) : this.obj.$element;
+      $target[this.obj.settings.inputs.recordCountPlacement](this.create());
     }
-  };
+  });
 
-  dt.Records.ProcessingIndicator = {
+  models.processingIndicator = Object.create(model).extend({
+    init: function() {
+      this.attach();
+    },
     create: function() {
       var $processing = $('<div></div>', {
-            html: '<span>' + settings.inputs.processingText + '</span>',
-            id: 'dynatable-processing-' + element.id,
+            html: '<span>' + this.obj.settings.inputs.processingText + '</span>',
+            id: 'dynatable-processing-' + this.obj.element.id,
             'class': 'dynatable-processing',
             style: 'position: absolute; display: none;'
           });
@@ -653,11 +662,11 @@
       return $processing;
     },
     position: function() {
-      var $processing = $('#dynatable-processing-' + element.id),
+      var $processing = $('#dynatable-processing-' + this.obj.element.id),
           $span = $processing.children('span'),
           spanHeight = $span.outerHeight(),
           spanWidth = $span.outerWidth(),
-          $covered = $element,
+          $covered = this.obj.$element,
           offset = $covered.offset(),
           height = $covered.outerHeight(), width = $covered.outerWidth();
 
@@ -671,18 +680,29 @@
       return $processing;
     },
     attach: function() {
-      $element.before(this.create());
+      this.obj.$element.before(this.create());
     },
     show: function() {
-      $('#dynatable-processing-' + element.id).show();
+      $('#dynatable-processing-' + this.obj.element.id).show();
       this.position();
     },
     hide: function() {
-      $('#dynatable-processing-' + element.id).hide();
+      $('#dynatable-processing-' + this.obj.element.id).hide();
     }
-  };
+  });
 
-  dt.State = {
+  models.state = Object.create(model).extend({
+    initOnLoad: function() {
+      // Check if pushState option is true, and if browser supports it
+      return this.obj.settings.features.pushState && history.pushState;
+    },
+    init: function() {
+      window.onpopstate = function(event) {
+        if (event.state && event.state.dynatable) {
+          this.pop(event);
+        }
+      }
+    },
     push: function(data) {
       var urlString = window.location.search,
           urlOptions,
@@ -693,10 +713,10 @@
       if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
       $.extend(urlOptions, data);
 
-      params = dt.Utility.refreshQueryString(urlString, data);
-      $element.trigger('dynatable:push', data);
+      params = utility.refreshQueryString(urlString, data, this.obj.settings);
+      this.obj.$element.trigger('dynatable:push', data);
 
-      cache = { dynatable: { dataset: settings.dataset } };
+      cache = { dynatable: { dataset: this.obj.settings.dataset } };
       cacheStr = JSON.stringify(cache);
 
       // Mozilla has a 640k char limit on what can be stored in pushState.
@@ -723,35 +743,43 @@
     },
     pop: function(event) {
       var data = event.state.dynatable;
-      settings.dataset = data.dataset;
+      this.obj.settings.dataset = data.dataset;
 
       // If dataset.records is cached from pushState
       if ( data.dataset.records ) {
-        dt.Dom.update();
+        this.obj.dom.update();
       } else {
         dt.process(true);
       }
     }
-  };
+  });
 
-  dt.Sorts = {
+  models.sorts = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.settings.features.sort;
+    },
+    init: function() {
+      var sortsUrl = window.location.search.match(new RegExp(this.obj.settings.params.sorts + '[^&=]*=[^&]*', 'g'));
+      this.obj.settings.dataset.sorts = sortsUrl ? utility.deserialize(sortsUrl)[this.obj.settings.params.sorts] : {};
+      this.obj.settings.dataset.sortsKeys = sortsUrl ? utility.keysFromObject(this.obj.settings.dataset.sorts) : [];
+    },
     add: function(attr, direction) {
-      var sortsKeys = settings.dataset.sortsKeys,
+      var sortsKeys = this.obj.settings.dataset.sortsKeys,
           index = $.inArray(attr, sortsKeys);
-      settings.dataset.sorts[attr] = direction;
+      this.obj.settings.dataset.sorts[attr] = direction;
       if (index === -1) { sortsKeys.push(attr); }
       return dt;
     },
     remove: function(attr) {
-      var sortsKeys = settings.dataset.sortsKeys,
+      var sortsKeys = this.obj.settings.dataset.sortsKeys,
           index = $.inArray(attr, sortsKeys);
-      delete settings.dataset.sorts[attr];
+      delete this.obj.settings.dataset.sorts[attr];
       if (index !== -1) { sortsKeys.splice(index, 1); }
       return dt;
     },
     clear: function() {
-      settings.dataset.sorts = {};
-      settings.dataset.sortsKeys.length = 0;
+      this.obj.settings.dataset.sorts = {};
+      this.obj.settings.dataset.sortsKeys.length = 0;
     },
     // Try to intelligently guess which sort function to use
     // based on the type of attribute values.
@@ -787,23 +815,30 @@
         return a['dynatable-original-index'] - b['dynatable-original-index'];
       }
     }
-  };
+  });
 
   // turn table headers into links which add sort to sorts array
-  dt.Sorts.Headers = {
+  models.sortsHeaders = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.settings.features.sort;
+    },
+    init: function() {
+      this.attach();
+    },
     create: function(cell) {
-      var $cell = $(cell),
+      var _this = this,
+          $cell = $(cell),
           $link = $('<a></a>', {
             'class': 'dynatable-sort-header',
             href: '#',
             html: $cell.html()
           }),
           id = $cell.data('dynatable-column'),
-          column = dt.Utility.findObjectInArray(settings.table.columns, {id: id});
+          column = utility.findObjectInArray(this.obj.settings.table.columns, {id: id});
 
       $link.bind('click', function(e) {
-        this.toggleSort(e, $link, column);
-        dt.process();
+        _this.toggleSort(e, $link, column);
+        _this.obj.process();
 
         e.preventDefault();
       });
@@ -819,8 +854,9 @@
       return $link;
     },
     attach: function() {
-      $element.find(settings.table.headRowSelector).children('th,td').each(function(){
-        this.attachOne(this);
+      var _this = this;
+      this.obj.$element.find(this.obj.settings.table.headRowSelector).children('th,td').each(function(){
+        _this.attachOne(this);
       });
     },
     attachOne: function(cell) {
@@ -842,63 +878,78 @@
       $link.find('.dynatable-arrow').remove();
     },
     removeAllArrows: function() {
-      $element.find('.dynatable-arrow').remove();
+      this.obj.$element.find('.dynatable-arrow').remove();
     },
     toggleSort: function(e, $link, column) {
-      var sortedByColumn = this.sortedByColumn($link, column),
+      var _this = this,
+          sortedByColumn = this.sortedByColumn($link, column),
           value = this.sortedByColumnValue(column);
       // Clear existing sorts unless this is a multisort event
-      if (!settings.inputs.multisort || !dt.Utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
+      if (!this.obj.settings.inputs.multisort || !utility.anyMatch(e, this.obj.settings.inputs.multisort, function(evt, key) { return e[key]; })) {
         this.removeAllArrows();
-        dt.Sorts.clear();
+        this.obj.sorts.clear();
       }
 
       // If sorts for this column are already set
       if (sortedByColumn) {
         // If ascending, then make descending
         if (value == 1) {
-          $.each(column.sorts, function(index,key) { dt.Sorts.add(key, -1); });
+          $.each(column.sorts, function(index,key) { _this.obj.sorts.add(key, -1); });
           this.appendArrowDown($link);
         // If descending, remove sort
         } else {
-          $.each(column.sorts, function(index,key) { dt.Sorts.remove(key); });
+          $.each(column.sorts, function(index,key) { _this.obj.sorts.remove(key); });
           this.removeArrow($link);
         }
       // Otherwise, if not already set, set to ascending
       } else {
-        $.each(column.sorts, function(index,key) { dt.Sorts.add(key, 1); });
+        $.each(column.sorts, function(index,key) { _this.obj.sorts.add(key, 1); });
         this.appendArrowUp($link);
       }
     },
     sortedByColumn: function($link, column) {
-      return dt.Utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; });
+      return utility.allMatch(this.obj.settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; });
     },
     sortedByColumnValue: function(column) {
-      return settings.dataset.sorts[column.sorts[0]];
+      return this.obj.settings.dataset.sorts[column.sorts[0]];
     }
-  };
+  });
 
   // For ajax, to add a query, just do
-  dt.Queries = {
+  models.queries = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.settings.inputs.queries || this.obj.settings.features.search;
+    },
+    init: function() {
+      var queriesUrl = window.location.search.match(new RegExp(this.obj.settings.params.queries + '[^&=]*=[^&]*', 'g'));
+
+      this.obj.settings.dataset.queries = queriesUrl ? utility.deserialize(queriesUrl)[this.obj.settings.params.queries] : {};
+      if (this.obj.settings.dataset.queries === "") { this.obj.settings.dataset.queries = {}; }
+
+      if (this.obj.settings.inputs.queries) {
+        this.setupInputs();
+      }
+    },
     add: function(name, value) {
       // reset to first page since query will change records
-      if (settings.features.paginate) {
-        settings.dataset.page = 1;
+      if (this.obj.settings.features.paginate) {
+        this.obj.settings.dataset.page = 1;
       }
-      settings.dataset.queries[name] = value;
+      this.obj.settings.dataset.queries[name] = value;
       return dt;
     },
     remove: function(name) {
-      delete settings.dataset.queries[name];
+      delete this.obj.settings.dataset.queries[name];
       return dt;
     },
     run: function() {
-      $.each(settings.dataset.queries, function(query, value) {
-        if (this.functions[query] === undefined) {
+      var _this = this;
+      $.each(this.obj.settings.dataset.queries, function(query, value) {
+        if (_this.functions[query] === undefined) {
           // Try to lazily evaluate query from column names if not explictly defined
-          var queryColumn = dt.Utility.findObjectInArray(settings.table.columns, {id: query});
+          var queryColumn = utility.findObjectInArray(_this.obj.settings.table.columns, {id: query});
           if (queryColumn) {
-            this.functions[query] = function(record, queryValue) {
+            _this.functions[query] = function(record, queryValue) {
               return record[query] == queryValue;
             };
           } else {
@@ -907,39 +958,40 @@
           }
         }
         // collect all records that return true for query
-        settings.dataset.records = $.map(settings.dataset.records, function(record) {
-          return this.functions[query](record, value) ? record : null;
+        _this.obj.settings.dataset.records = $.map(_this.obj.settings.dataset.records, function(record) {
+          return _this.functions[query](record, value) ? record : null;
         });
       });
-      settings.dataset.queryRecordCount = dt.Records.count();
+      this.obj.settings.dataset.queryRecordCount = this.obj.records.count();
     },
     // Shortcut for performing simple query from built-in search
     runSearch: function(q) {
-      var origQueries = $.extend({}, settings.dataset.queries);
+      var origQueries = $.extend({}, this.obj.settings.dataset.queries);
       if (q) {
         this.add('search', q);
       } else {
         this.remove('search');
       }
-      if (!dt.Utility.objectsEqual(settings.dataset.queries, origQueries)) {
-        dt.process();
+      if (!utility.objectsEqual(this.obj.settings.dataset.queries, origQueries)) {
+        this.obj.process();
       }
     },
     setupInputs: function() {
-      settings.inputs.queries.each(function() {
+      var _this = this;
+      this.obj.settings.inputs.queries.each(function() {
         var $this = $(this),
-            event = $this.data('dynatable-query-event') || settings.inputs.queryEvent,
+            event = $this.data('dynatable-query-event') || _this.obj.settings.inputs.queryEvent,
             query = $this.data('dynatable-query') || $this.attr('name') || this.id,
             queryFunction = function(e) {
               var q = $(this).val();
               if (q === "") { q = undefined; }
-              if (q === settings.dataset.queries[query]) { return false; }
+              if (q === _this.obj.settings.dataset.queries[query]) { return false; }
               if (q) {
-                this.add(query, q);
+                _this.add(query, q);
               } else {
-                this.remove(query);
+                _this.remove(query);
               }
-              dt.process();
+              _this.obj.process();
               e.preventDefault();
             };
 
@@ -952,7 +1004,7 @@
             }
           });
 
-        if (settings.dataset.queries[query]) { $this.val(decodeURIComponent(settings.dataset.queries[query])); }
+        if (_this.obj.settings.dataset.queries[query]) { $this.val(decodeURIComponent(_this.obj.settings.dataset.queries[query])); }
       });
     },
     // Query functions for in-page querying
@@ -974,100 +1026,132 @@
         return contains;
       }
     }
-  };
+  });
 
-  dt.Inputs = {
-  }
-
-  dt.Inputs.Search = {
+  models.inputsSearch = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.settings.features.search;
+    },
+    init: function() {
+      this.attach();
+    },
     create: function() {
-      var $search = $('<input />', {
+      var _this = this,
+          $search = $('<input />', {
             type: 'search',
-            id: 'dynatable-query-search-' + element.id,
-            value: settings.dataset.queries.search
+            id: 'dynatable-query-search-' + this.obj.element.id,
+            value: this.obj.settings.dataset.queries.search
           }),
           $searchSpan = $('<span></span>', {
-            id: 'dynatable-search-' + element.id,
+            id: 'dynatable-search-' + this.obj.element.id,
             'class': 'dynatable-search',
             text: 'Search: '
           }).append($search);
 
       $search
-        .bind(settings.inputs.queryEvent, function() {
-          dt.Queries.runSearch($(this).val());
+        .bind(this.obj.settings.inputs.queryEvent, function() {
+          _this.obj.queries.runSearch($(this).val());
         })
         .bind('keypress', function(e) {
           if (e.which == 13) {
-            dt.Queries.runSearch($(this).val());
+            _this.obj.queries.runSearch($(this).val());
             e.preventDefault();
           }
         });
       return $searchSpan;
     },
     attach: function() {
-      var $target = settings.inputs.searchTarget ? $(settings.inputs.searchTarget) : $element;
-      $target[settings.inputs.searchPlacement](this.create());
+      var $target = this.obj.settings.inputs.searchTarget ? $(this.obj.settings.inputs.searchTarget) : this.obj.$element;
+      $target[this.obj.settings.inputs.searchPlacement](this.create());
     }
-  };
-
-  dt.Pagination = {
-  };
+  });
 
   // provide a public function for selecting page
-  dt.Pagination.Page = {
+  models.paginationPage = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.settings.features.paginate;
+    },
+    init: function() {
+      var pageUrl = window.location.search.match(new RegExp(this.obj.settings.params.page + '=([^&]*)'));
+      this.set(pageUrl ? pageUrl[1] : 1);
+    },
     set: function(page) {
-      settings.dataset.page = parseInt(page, 10);
+      this.obj.settings.dataset.page = parseInt(page, 10);
     }
-  }
+  });
 
-  dt.Pagination.PerPage = {
+  models.paginationPerPage = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.settings.features.paginate;
+    },
+    init: function() {
+      var perPageUrl = window.location.search.match(new RegExp(this.obj.settings.params.perPage + '=([^&]*)'));
+
+      if (perPageUrl) {
+        this.set(perPageUrl[1]);
+      } else {
+        this.set(this.obj.settings.dataset.perPageDefault);
+      }
+
+      if (this.obj.settings.features.perPageSelect) {
+        this.attach();
+      }
+    },
     create: function() {
-      var $select = $('<select>', {
-            id: 'dynatable-per-page-' + element.id,
+      var _this = this,
+          $select = $('<select>', {
+            id: 'dynatable-per-page-' + this.obj.element.id,
             'class': 'dynatable-per-page-select'
           });
 
-      $.each(settings.dataset.perPageOptions, function(index, number) {
-        var selected = settings.dataset.perPage == number ? 'selected="selected"' : '';
+      $.each(this.obj.settings.dataset.perPageOptions, function(index, number) {
+        var selected = _this.obj.settings.dataset.perPage == number ? 'selected="selected"' : '';
         $select.append('<option value="' + number + '" ' + selected + '>' + number + '</option>');
       })
 
       $select.bind('change', function(e) {
-        this.set($(this).val());
-        dt.process();
+        _this.set($(this).val());
+        _this.obj.process();
       });
 
       return $('<span />', {
         'class': 'dynatable-per-page'
-      }).append("<span class='dynatable-per-page-label'>" + settings.inputs.perPageText + "</span>").append($select);
+      }).append("<span class='dynatable-per-page-label'>" + this.obj.settings.inputs.perPageText + "</span>").append($select);
     },
     attach: function() {
-      var $target = settings.inputs.perPageTarget ? $(settings.inputs.perPageTarget) : $element;
-      $target[settings.inputs.perPagePlacement](this.create());
+      var $target = this.obj.settings.inputs.perPageTarget ? $(this.obj.settings.inputs.perPageTarget) : this.obj.$element;
+      $target[this.obj.settings.inputs.perPagePlacement](this.create());
     },
     set: function(number) {
-      dt.Pagination.Page.set(1);
-      settings.dataset.perPage = parseInt(number);
+      this.obj.paginationPage.set(1);
+      this.obj.settings.dataset.perPage = parseInt(number);
     }
-  };
+  });
 
   // pagination links which update dataset.page attribute
-  dt.Pagination.Links = {
+  models.paginationLinks = Object.create(model).extend({
+    initOnLoad: function() {
+      return this.obj.settings.features.paginate;
+    },
+    init: function() {
+      this.attach();
+    },
     create: function() {
-      var $pageLinks = $('<ul></ul>', {
-            id: 'dynatable-pagination-links-' + element.id,
+      var _this = this,
+          $pageLinks = $('<ul></ul>', {
+            id: 'dynatable-pagination-links-' + this.obj.element.id,
             'class': 'dynatable-pagination-links',
             html: '<span>Pages: </span>'
           }),
           pageLinkClass = 'dynatable-page-link',
           activePageClass = 'dynatable-active-page',
-          pages = Math.ceil(settings.dataset.queryRecordCount / settings.dataset.perPage),
-          page = settings.dataset.page,
+          pages = Math.ceil(this.obj.settings.dataset.queryRecordCount / this.obj.settings.dataset.perPage),
+          page = this.obj.settings.dataset.page,
           breaks = [
-            settings.inputs.paginationGap[0],
-            settings.dataset.page - settings.inputs.paginationGap[1],
-            settings.dataset.page + settings.inputs.paginationGap[2],
-            (pages + 1) - settings.inputs.paginationGap[3]
+            this.obj.settings.inputs.paginationGap[0],
+            this.obj.settings.dataset.page - this.obj.settings.inputs.paginationGap[1],
+            this.obj.settings.dataset.page + this.obj.settings.inputs.paginationGap[2],
+            (pages + 1) - this.obj.settings.inputs.paginationGap[3]
           ],
           $link;
 
@@ -1085,10 +1169,10 @@
           if (page == i) { $link.addClass(activePageClass); }
 
           // If i is not between one of the following
-          // (1 + (settings.paginationGap[0]))
-          // (page - settings.paginationGap[1])
-          // (page + settings.paginationGap[2])
-          // (pages - settings.paginationGap[3])
+          // (1 + (this.obj.settings.paginationGap[0]))
+          // (page - this.obj.settings.paginationGap[1])
+          // (page + this.obj.settings.paginationGap[2])
+          // (pages - this.obj.settings.paginationGap[3])
           var breakIndex = $.inArray(i, breaks),
               nextBreak = breaks[breakIndex + 1];
           if (breakIndex > 0 && i !== 1 && nextBreak && nextBreak > (i + 1)) {
@@ -1098,18 +1182,18 @@
 
         }
 
-        if (settings.inputs.paginationPrev && i === 1) {
+        if (this.obj.settings.inputs.paginationPrev && i === 1) {
           var $prevLink = $('<a></a>',{
-            html: settings.inputs.paginationPrev,
+            html: _this.obj.settings.inputs.paginationPrev,
             'class': pageLinkClass + ' dynatable-page-prev',
             'data-dynatable-page': page - 1
           });
           if (page === 1) { $prevLink.addClass(activePageClass); }
           $link = $link.before($prevLink);
         }
-        if (settings.inputs.paginationNext && i === pages) {
+        if (_this.obj.settings.inputs.paginationNext && i === pages) {
           var $nextLink = $('<a></a>',{
-            html: settings.inputs.paginationNext,
+            html: this.obj.settings.inputs.paginationNext,
             'class': pageLinkClass + ' dynatable-page-next',
             'data-dynatable-page': page + 1
           });
@@ -1121,7 +1205,7 @@
       $pageLinks.children().wrap('<li></li>');
 
       // only bind page handler to non-active pages
-      var selector = '#dynatable-pagination-links-' + element.id + ' .' + pageLinkClass + ':not(.' + activePageClass + ')';
+      var selector = '#dynatable-pagination-links-' + this.obj.element.id + ' .' + pageLinkClass + ':not(.' + activePageClass + ')';
       // kill any existing delegated-bindings so they don't stack up
       $(document).undelegate(selector, 'click.dynatable');
       $(document).delegate(selector, 'click.dynatable', function(e) {
@@ -1129,8 +1213,8 @@
         $this.closest('.dynatable-pagination-links').find('.' + activePageClass).removeClass(activePageClass);
         $this.addClass(activePageClass);
 
-        dt.Pagination.Page.set($this.data('dynatable-page'));
-        dt.process();
+        _this.obj.paginationPage.set($this.data('dynatable-page'));
+        _this.obj.process();
         e.preventDefault();
       });
 
@@ -1139,14 +1223,13 @@
     attach: function() {
       // append page liks *after* delegate-event-binding so it doesn't need to
       // find and select all page links to bind event
-      var $target = settings.inputs.paginationLinkTarget ? $(settings.inputs.paginationLinkTarget) : $element;
-      $target[settings.inputs.paginationLinkPlacement](dt.Pagination.Links.create());
+      var $target = this.obj.settings.inputs.paginationLinkTarget ? $(this.obj.settings.inputs.paginationLinkTarget) : this.obj.$element;
+      $target[this.obj.settings.inputs.paginationLinkPlacement](this.obj.paginationLinks.create());
     }
-  };
+  });
 
-  dt.Utility = {
-    normalizeText: function(text) {
-      var style = settings.table.defaultColumnIdStyle;
+  utility = {
+    normalizeText: function(text, style) {
       text = this.textTransform[style](text);
       return text;
     },
@@ -1155,19 +1238,19 @@
         return text.replace(/^\s+|\s+$/g, "").replace(/\s+/g, "-");
       },
       camelCase: function(text) {
-        text = this.textTransform.trimDash(text);
+        text = this.trimDash(text);
         return text
           .replace(/(\-[a-zA-Z])/g, function($1){return $1.toUpperCase().replace('-','');})
           .replace(/([A-Z])([A-Z]+)/g, function($1,$2,$3){return $2 + $3.toLowerCase();})
           .replace(/^[A-Z]/, function($1){return $1.toLowerCase();});
       },
       dashed: function(text) {
-        text = this.textTransform.trimDash(text);
-        return this.textTransform.lowercase(text);
+        text = this.trimDash(text);
+        return this.lowercase(text);
       },
       underscore: function(text) {
-        text = this.textTransform.trimDash(text);
-        return this.textTransform.lowercase(text.replace(/(-)/g, '_'));
+        text = this.trimDash(text);
+        return this.lowercase(text.replace(/(-)/g, '_'));
       },
       lowercase: function(text) {
         return text.replace(/([A-Z])/g, function($1){return $1.toLowerCase();});
@@ -1226,8 +1309,9 @@
       }
       return hash;
     },
-    refreshQueryString: function(urlString, data) {
-      var queryString = urlString.split('?'),
+    refreshQueryString: function(urlString, data, settings) {
+      var _this = this,
+          queryString = urlString.split('?'),
           path = queryString.shift(),
           urlOptions;
 
@@ -1239,7 +1323,7 @@
         // because if the feature is turned off, then parameter name is a coincidence and it's unrelated to dynatable.
         if (
           (!settings.features.sort && attr == "sorts") ||
-            (!settings.features.paginate && this.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
+            (!settings.features.paginate && _this.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
         ) {
           return true;
         }
@@ -1297,10 +1381,11 @@
     // Find an object in an array of objects by attributes.
     // E.g. find object with {id: 'hi', name: 'there'} in an array of objects
     findObjectInArray: function(array, objectAttr) {
-      var foundObject;
+      var _this = this,
+          foundObject;
       $.each(array, function(index, item) {
         // For each object in array, test to make sure all attributes in objectAttr match
-        if (this.allMatch(item, objectAttr, function(item, key, value) { return item[key] == value; })) {
+        if (_this.allMatch(item, objectAttr, function(item, key, value) { return item[key] == value; })) {
           foundObject = item;
           return false;
         }
@@ -1361,15 +1446,6 @@
       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
     }
   };
-
-  // Object.create support test, and fallback for browsers without it
-  if ( typeof Object.create !== "function" ) {
-    Object.create = function (o) {
-      function F() {}
-      F.prototype = o;
-      return new F();
-    };
-  }
 
   // Create dynatable plugin based on a defined object
   $.dynatable = function( object ) {
