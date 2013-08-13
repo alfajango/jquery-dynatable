@@ -17,7 +17,14 @@ TODO:
 * Namespace pushstate query parameters by dynatable instance id to
   simplify `refreshQueryString` function and prevent conflicts between
   multiple pushState-enabled instances on one page.
-* Refactor using prototype to abstract dynatable-global functions to
-  improve memory efficiency for multiple instances on one page.
+* ~~Refactor using prototype to abstract dynatable-global functions to
+  improve memory efficiency for multiple instances on one page.~~
 * Implement configurable sorting algorithm (see
   [JS Merge Sort](http://en.literateprograms.org/Merge_sort_%28JavaScript%29) and [Sorting Table](http://blog.vjeux.com/2010/javascript/javascript-sorting-table.html)).
+* Change from Object.create method to constructor pattern to improve
+  performances (see
+  [benchmark](http://jsperf.com/object-create-vs-constructor-vs-object-literal/7)).
+* Use for loops instead of $.each where possible to improve performance.
+* Use strings and/or document fragments for writing to DOM, instead of
+  jQuery, by default to improve writing performance.
+* Use Chrome profiler to find any performance bottlenecks and fix.
