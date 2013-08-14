@@ -45,8 +45,9 @@
         var $tr = $('<tr></tr>');
 
         // grab the record's attribute for each column
-        $.each(columns, function(colIndex, column) {
-          var html = column.dataFilter(record),
+        for (var i = 0, len = columns.length; i < len; i++) {
+          var column = columns[i],
+              html = column.dataFilter(record),
           $td = cellFilter(html);
 
           if (column.hidden) {
@@ -56,7 +57,7 @@
             $td.css('text-align', column.textAlign);
           }
           $tr.append($td);
-        });
+        }
 
         return $tr;
       },
@@ -311,10 +312,11 @@
       this.obj.$element.trigger('dynatable:beforeUpdate', $rows);
 
       // loop through records
-      $.each(this.obj.settings.dataset.records, function(rowIndex, record){
-        var $tr = rowFilter(rowIndex, record, columns, cellFilter);
+      for (var i = 0, len = this.obj.settings.dataset.records.length; i < len; i++) {
+        var record = this.obj.settings.dataset.records[i],
+            $tr = rowFilter(i, record, columns, cellFilter);
         $rows = $rows.add($tr);
-      });
+      }
 
       // Appended dynatable interactive elements
       if (this.obj.settings.features.recordCount) {
@@ -330,8 +332,8 @@
       // Sort headers functionality
       if (this.obj.settings.features.sort && columns) {
         this.obj.sortsHeaders.removeAllArrows();
-        $.each(columns, function() {
-          var column = this,
+        for (var i = 0, len = columns.length; i < len; i++) {
+          var column = columns[i],
               sortedByColumn = utility.allMatch(_this.obj.settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; }),
               value = _this.obj.settings.dataset.sorts[column.sorts[0]];
 
@@ -344,7 +346,7 @@
               }
             });
           }
-        });
+        }
       }
 
       // Query search functionality
@@ -432,9 +434,9 @@
 
         // increment the index of all columns after this one that was just inserted
         if (columnsAfter.length) {
-          $.each(columnsAfter, function() {
-            this.index += 1;
-          });
+          for (var i = 0, len = columnsAfter.length; i < len; i++) {
+            columnsAfter[i].index += 1;
+          }
         }
 
         if (!skipUpdate) {
@@ -472,11 +474,13 @@
         .remove();
     };
     this.removeFromArray = function(index) {
-      var columns = this.obj.settings.table.columns;
+      var columns = this.obj.settings.table.columns,
+          adjustColumns;
       columns.splice(index, 1);
-      $.each(columns.slice(index, columns.length), function() {
-        this.index -= 1;
-      });
+      adjustColumns = columns.slice(index, columns.length);
+      for (var i = 0, len = adjustColumns.length; i < len; i++) {
+        adjustColumns[i].index -= 1;
+      }
     };
     this.defaultFilter = function(record) {
       // `this` is the column object in this.obj.settings.columns
@@ -558,14 +562,15 @@
         if ($.isEmptyObject(sorts)) {
           comparison = _this.obj.sorts.functions['originalPlacement'](a, b);
         } else {
-          $.each(sortsKeys, function(index, attr) {
-            var direction = sorts[attr],
+          for (var i = 0, len = sortsKeys.length; i < len; i++) {
+            var attr = sortsKeys[i],
+                direction = sorts[attr],
                 sortType = sortTypes[attr] || _this.obj.sorts.guessType(a, b, attr);
             comparison = _this.obj.sorts.functions[sortType](a, b, attr, direction);
             // Don't need to sort any further unless this sort is a tie between a and b,
-            // so return false to break the $.each() loop unless tied
-            return comparison == 0;
-          });
+            // so break the for loop unless tied
+            if (comparison !== 0) { break; }
+          }
         }
         return comparison;
       }
@@ -929,16 +934,22 @@
       if (sortedByColumn) {
         // If ascending, then make descending
         if (value == 1) {
-          $.each(column.sorts, function(index,key) { _this.obj.sorts.add(key, -1); });
+          for (var i = 0, len = column.sorts.length; i < len; i++) {
+            _this.obj.sorts.add(column.sorts[i], -1);
+          }
           this.appendArrowDown($link);
         // If descending, remove sort
         } else {
-          $.each(column.sorts, function(index,key) { _this.obj.sorts.remove(key); });
+          for (var i = 0, len = column.sorts.length; i < len; i++) {
+            _this.obj.sorts.remove(column.sorts[i]);
+          }
           this.removeArrow($link);
         }
       // Otherwise, if not already set, set to ascending
       } else {
-        $.each(column.sorts, function(index,key) { _this.obj.sorts.add(key, 1); });
+        for (var i = 0, len = column.sorts.length; i < len; i++) {
+          _this.obj.sorts.add(column.sorts[i], 1);
+        }
         this.appendArrowUp($link);
       }
     };
@@ -981,24 +992,27 @@
     };
     this.run = function() {
       var _this = this;
-      $.each(this.obj.settings.dataset.queries, function(query, value) {
-        if (_this.functions[query] === undefined) {
-          // Try to lazily evaluate query from column names if not explictly defined
-          var queryColumn = utility.findObjectInArray(_this.obj.settings.table.columns, {id: query});
-          if (queryColumn) {
-            _this.functions[query] = function(record, queryValue) {
-              return record[query] == queryValue;
-            };
-          } else {
-            $.error("Query named '" + query + "' called, but not defined in queries.functions");
-            return true; // to skip to next query
+      for (query in this.obj.settings.dataset.queries) {
+        if (_this.obj.settings.dataset.queries.hasOwnProperty(query)) {
+          var value = _this.obj.settings.dataset.queries[query];
+          if (_this.functions[query] === undefined) {
+            // Try to lazily evaluate query from column names if not explictly defined
+            var queryColumn = utility.findObjectInArray(_this.obj.settings.table.columns, {id: query});
+            if (queryColumn) {
+              _this.functions[query] = function(record, queryValue) {
+                return record[query] == queryValue;
+              };
+            } else {
+              $.error("Query named '" + query + "' called, but not defined in queries.functions");
+              continue; // to skip to next query
+            }
           }
+          // collect all records that return true for query
+          _this.obj.settings.dataset.records = $.map(_this.obj.settings.dataset.records, function(record) {
+            return _this.functions[query](record, value) ? record : null;
+          });
         }
-        // collect all records that return true for query
-        _this.obj.settings.dataset.records = $.map(_this.obj.settings.dataset.records, function(record) {
-          return _this.functions[query](record, value) ? record : null;
-        });
-      });
+      }
       this.obj.settings.dataset.queryRecordCount = this.obj.records.count();
     };
     // Shortcut for performing simple query from built-in search
@@ -1051,15 +1065,18 @@
       search: function(record, queryValue) {
         var contains = false;
         // Loop through each attribute of record
-        $.each(record, function(attr, attrValue) {
-          if (typeof(attrValue) === "string" && attrValue.toLowerCase().indexOf(queryValue.toLowerCase()) !== -1) {
-            contains = true;
-            // Don't need to keep searching attributes once found
-            return false;
-          } else {
-            return true;
+        for (attr in record) {
+          if (record.hasOwnProperty(attr)) {
+            var attrValue = record[attr];
+            if (typeof(attrValue) === "string" && attrValue.toLowerCase().indexOf(queryValue.toLowerCase()) !== -1) {
+              contains = true;
+              // Don't need to keep searching attributes once found
+              break;
+            } else {
+              continue;
+            }
           }
-        });
+        }
         return contains;
       }
     };
@@ -1147,10 +1164,11 @@
             'class': 'dynatable-per-page-select'
           });
 
-      $.each(this.obj.settings.dataset.perPageOptions, function(index, number) {
-        var selected = _this.obj.settings.dataset.perPage == number ? 'selected="selected"' : '';
+      for (var i = 0, len = this.obj.settings.dataset.perPageOptions.length; i < len; i++) {
+        var number = this.obj.settings.dataset.perPageOptions[i],
+            selected = _this.obj.settings.dataset.perPage == number ? 'selected="selected"' : '';
         $select.append('<option value="' + number + '" ' + selected + '>' + number + '</option>');
-      })
+      }
 
       $select.bind('change', function(e) {
         _this.set($(this).val());
@@ -1364,62 +1382,66 @@
       urlOptions = this.deserialize(urlString);
 
       // Loop through each dynatable param and update the URL with it
-      $.each(settings.params, function(attr, label) {
-        // Skip over parameters matching attributes for disabled features (i.e. leave them untouched),
-        // because if the feature is turned off, then parameter name is a coincidence and it's unrelated to dynatable.
-        if (
-          (!settings.features.sort && attr == "sorts") ||
-            (!settings.features.paginate && _this.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
-        ) {
-          return true;
-        }
-
-        // Delete page and offset from url params if on page 1 (default)
-        if ((attr === "page" || attr === "offset") && data["page"] === 1) {
-          if (urlOptions[label]) {
-            delete urlOptions[label];
+      for (attr in settings.params) {
+        if (settings.params.hasOwnProperty(attr)) {
+          var label = settings.params[attr];
+          // Skip over parameters matching attributes for disabled features (i.e. leave them untouched),
+          // because if the feature is turned off, then parameter name is a coincidence and it's unrelated to dynatable.
+          if (
+            (!settings.features.sort && attr == "sorts") ||
+              (!settings.features.paginate && _this.anyMatch(attr, ["page", "perPage", "offset"], function(attr, param) { return attr == param; }))
+          ) {
+            continue;
           }
-          return true;
-        }
 
-        // Delete perPage from url params if default perPage value
-        if (attr === "perPage" && data[label] == settings.dataset.perPageDefault) {
-          if (urlOptions[label]) {
-            delete urlOptions[label];
-          }
-          return true;
-        }
-
-        // For queries, we're going to handle each possible query parameter individually here instead of
-        // handling the entire queries object below, since we need to make sure that this is a query controlled by dynatable.
-        if (attr == "queries" && data[label]) {
-          var queries = settings.inputs.queries || [],
-              inputQueries = $.makeArray(queries.map(function() { return $(this).attr('name') }));
-          $.each(inputQueries, function(i, attr) {
-            if (data[label][attr]) {
-              if (typeof urlOptions[label] === 'undefined') { urlOptions[label] = {}; }
-              urlOptions[label][attr] = data[label][attr];
-            } else {
-              delete urlOptions[label][attr];
+          // Delete page and offset from url params if on page 1 (default)
+          if ((attr === "page" || attr === "offset") && data["page"] === 1) {
+            if (urlOptions[label]) {
+              delete urlOptions[label];
             }
-          });
-          return true;
-        }
+            continue;
+          }
 
-        // If we havne't returned true by now, then we actually want to update the parameter in the URL
-        if (data[label]) {
-          urlOptions[label] = data[label];
-        } else {
-          delete urlOptions[label];
+          // Delete perPage from url params if default perPage value
+          if (attr === "perPage" && data[label] == settings.dataset.perPageDefault) {
+            if (urlOptions[label]) {
+              delete urlOptions[label];
+            }
+            continue;
+          }
+
+          // For queries, we're going to handle each possible query parameter individually here instead of
+          // handling the entire queries object below, since we need to make sure that this is a query controlled by dynatable.
+          if (attr == "queries" && data[label]) {
+            var queries = settings.inputs.queries || [],
+                inputQueries = $.makeArray(queries.map(function() { return $(this).attr('name') }));
+            for (var i = 0, len = inputQueries.length; i < len; i++) {
+              var attr = inputQueries[i];
+              if (data[label][attr]) {
+                if (typeof urlOptions[label] === 'undefined') { urlOptions[label] = {}; }
+                urlOptions[label][attr] = data[label][attr];
+              } else {
+                delete urlOptions[label][attr];
+              }
+            }
+            continue;
+          }
+
+          // If we havne't returned true by now, then we actually want to update the parameter in the URL
+          if (data[label]) {
+            urlOptions[label] = data[label];
+          } else {
+            delete urlOptions[label];
+          }
         }
-      });
+      }
       return decodeURI($.param(urlOptions));
     },
     // Get array of keys from object
     // see http://stackoverflow.com/questions/208016/how-to-list-the-properties-of-a-javascript-object/208020#208020
     keysFromObject: function(obj){
       var keys = [];
-      for(var key in obj){
+      for (var key in obj){
         keys.push(key);
       }
       return keys;
@@ -1429,13 +1451,14 @@
     findObjectInArray: function(array, objectAttr) {
       var _this = this,
           foundObject;
-      $.each(array, function(index, item) {
+      for (var i = 0, len = array.length; i < len; i++) {
+        var item = array[i];
         // For each object in array, test to make sure all attributes in objectAttr match
         if (_this.allMatch(item, objectAttr, function(item, key, value) { return item[key] == value; })) {
           foundObject = item;
-          return false;
+          break;
         }
-      });
+      }
       return foundObject;
     },
     // Return true if supplied test function passes for ALL items in an array
