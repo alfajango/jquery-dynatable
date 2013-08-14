@@ -258,6 +258,7 @@
       this.element = element;
       this.$element = $(element);
 
+      // All the setup that doesn't require element or options
       build.call(this);
 
       return this;
