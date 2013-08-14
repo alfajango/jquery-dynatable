@@ -12,19 +12,10 @@
 //
 
 (function($) {
-  // Object.create support test, and fallback for browsers without it
-  if ( typeof Object.create !== "function" ) {
-    Object.create = function (o) {
-      function F() {}
-      F.prototype = o;
-      return new F();
-    };
-  }
-
   var defaults,
       mergeSettings,
       dt,
-      model,
+      Model,
       models = {},
       utility,
       build,
@@ -264,26 +255,31 @@
     }
   };
 
-  model = {
-    extend: function(props) {
+  Model = function() {
+    this.extend = function(props) {
       for (prop in props) {
         if (props.hasOwnProperty(prop)) {
           this[prop] = props[prop];
         }
       }
       return this;
-    },
-    setInstance: function(instance) {
+    };
+
+    this.setInstance = function(instance) {
       this.obj = instance;
       return this;
-    },
-    initOnLoad: function() {
+    };
+
+    this.initOnLoad = function() {
       return true;
-    },
-    init: function() {}
+    };
+
+    this.init = function() {}
+
+    return this;
   };
 
-  models.dom = Object.create(model).extend({
+  models.dom = (new Model).extend({
     // update table contents with new records array
     // from query (whether ajax or not)
     update: function() {
@@ -347,7 +343,7 @@
     }
   });
 
-  models.domColumns = Object.create(model).extend({
+  models.domColumns = (new Model).extend({
     initOnLoad: function() {
       return this.obj.$element.is('table');
     },
@@ -484,7 +480,7 @@
     }
   });
 
-  models.records = Object.create(model).extend({
+  models.records = (new Model).extend({
     initOnLoad: function() {
       return this.obj.settings.dataset.records === null && !this.obj.settings.dataset.ajax;
     },
@@ -616,7 +612,7 @@
     }
   });
 
-  models.recordsCount = Object.create(model).extend({
+  models.recordsCount = (new Model).extend({
     initOnLoad: function() {
       return this.obj.settings.features.recordCount;
     },
@@ -653,7 +649,7 @@
     }
   });
 
-  models.processingIndicator = Object.create(model).extend({
+  models.processingIndicator = (new Model).extend({
     init: function() {
       this.attach();
     },
@@ -697,7 +693,7 @@
     }
   });
 
-  models.state = Object.create(model).extend({
+  models.state = (new Model).extend({
     initOnLoad: function() {
       // Check if pushState option is true, and if browser supports it
       return this.obj.settings.features.pushState && history.pushState;
@@ -755,12 +751,12 @@
       if ( data.dataset.records ) {
         this.obj.dom.update();
       } else {
-        dt.process(true);
+        this.obj.process(true);
       }
     }
   });
 
-  models.sorts = Object.create(model).extend({
+  models.sorts = (new Model).extend({
     initOnLoad: function() {
       return this.obj.settings.features.sort;
     },
@@ -824,7 +820,7 @@
   });
 
   // turn table headers into links which add sort to sorts array
-  models.sortsHeaders = Object.create(model).extend({
+  models.sortsHeaders = (new Model).extend({
     initOnLoad: function() {
       return this.obj.settings.features.sort;
     },
@@ -922,7 +918,7 @@
   });
 
   // For ajax, to add a query, just do
-  models.queries = Object.create(model).extend({
+  models.queries = (new Model).extend({
     initOnLoad: function() {
       return this.obj.settings.inputs.queries || this.obj.settings.features.search;
     },
@@ -1034,7 +1030,7 @@
     }
   });
 
-  models.inputsSearch = Object.create(model).extend({
+  models.inputsSearch = (new Model).extend({
     initOnLoad: function() {
       return this.obj.settings.features.search;
     },
@@ -1073,7 +1069,7 @@
   });
 
   // provide a public function for selecting page
-  models.paginationPage = Object.create(model).extend({
+  models.paginationPage = (new Model).extend({
     initOnLoad: function() {
       return this.obj.settings.features.paginate;
     },
@@ -1086,7 +1082,7 @@
     }
   });
 
-  models.paginationPerPage = Object.create(model).extend({
+  models.paginationPerPage = (new Model).extend({
     initOnLoad: function() {
       return this.obj.settings.features.paginate;
     },
@@ -1135,7 +1131,7 @@
   });
 
   // pagination links which update dataset.page attribute
-  models.paginationLinks = Object.create(model).extend({
+  models.paginationLinks = (new Model).extend({
     initOnLoad: function() {
       return this.obj.settings.features.paginate;
     },
@@ -1452,6 +1448,15 @@
       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
     }
   };
+
+  // Object.create support test, and fallback for browsers without it
+  if ( typeof Object.create !== "function" ) {
+    Object.create = function (o) {
+      function F() {}
+      F.prototype = o;
+      return new F();
+    };
+  }
 
   // Create dynatable plugin based on a defined object
   $.dynatable = function( object ) {
