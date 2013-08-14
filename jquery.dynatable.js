@@ -21,166 +21,167 @@
     };
   }
 
-  var globalDefaults, dynatable, dt, model, models = {}, utility;
+  var defaults,
+      mergeSettings,
+      dt,
+      model,
+      models = {},
+      utility,
+      build,
+      initModel;
 
-  globalDefaults = {};
+  defaults = {
+    features: {
+      paginate: true,
+      sort: true,
+      pushState: true,
+      search: true,
+      recordCount: true,
+      perPageSelect: true
+    },
+    table: {
+      defaultColumnIdStyle: 'camelCase',
+      columns: null,
+      headRowSelector: 'thead tr', // or e.g. tr:first-child
+      bodyRowSelector: 'tbody tr',
+      headRowClass: null,
+      rowFilter: function(rowIndex, record, columns, cellFilter) {
+        var $tr = $('<tr></tr>');
+
+        // grab the record's attribute for each column
+        $.each(columns, function(colIndex, column) {
+          var html = column.dataFilter(record),
+          $td = cellFilter(html);
+
+          if (column.hidden) {
+            $td.hide();
+          }
+          if (column.textAlign) {
+            $td.css('text-align', column.textAlign);
+          }
+          $tr.append($td);
+        });
+
+        return $tr;
+      },
+      cellFilter: function(html) {
+        return $('<td></td>', {
+          html: html
+        });
+      }
+    },
+    inputs: {
+      queries: null,
+      sorts: null,
+      multisort: ['ctrlKey', 'shiftKey', 'metaKey'],
+      page: null,
+      queryEvent: 'blur change',
+      recordCountTarget: null,
+      recordCountPlacement: 'after',
+      paginationLinkTarget: null,
+      paginationLinkPlacement: 'after',
+      paginationPrev: 'Previous',
+      paginationNext: 'Next',
+      paginationGap: [1,2,2,1],
+      searchTarget: null,
+      searchPlacement: 'before',
+      perPageTarget: null,
+      perPagePlacement: 'before',
+      perPageText: 'Show: ',
+      recordCountText: 'Showing ',
+      processingText: 'Processing...'
+    },
+    dataset: {
+      ajax: false,
+      ajaxUrl: null,
+      ajaxCache: null,
+      ajaxOnLoad: false,
+      ajaxMethod: 'GET',
+      ajaxDataType: 'json',
+      totalRecordCount: null,
+      queries: {},
+      queryRecordCount: null,
+      page: null,
+      perPageDefault: 10,
+      perPageOptions: [10,20,50,100],
+      sorts: {},
+      sortsKeys: null,
+      sortTypes: {},
+      records: null
+    },
+    filters: {},
+    unfilters: {},
+    params: {
+      dynatable: 'dynatable',
+      queries: 'queries',
+      sorts: 'sorts',
+      page: 'page',
+      perPage: 'perPage',
+      offset: 'offset',
+      records: 'records',
+      record: null,
+      queryRecordCount: 'queryRecordCount',
+      totalRecordCount: 'totalRecordCount'
+    }
+  };
+
+  mergeSettings = function(options) {
+    var newOptions = $.extend(true, {}, defaults, options);
+
+    // TODO: figure out a better way to do this.
+    // Doing `extend(true)` causes any elements that are arrays
+    // to merge the default and options arrays instead of overriding the defaults.
+    if (options) {
+      if (options.inputs) {
+        if (options.inputs.multisort) {
+          newOptions.inputs.multisort = options.inputs.multisort;
+        }
+        if (options.inputs.paginationGap) {
+          newOptions.inputs.paginationGap = options.inputs.paginationGap;
+        }
+      }
+      if (options.dataset && options.dataset.perPageOptions) {
+        newOptions.dataset.perPageOptions = options.dataset.perPageOptions;
+      }
+    }
+
+    return newOptions;
+  };
+
+  build = function() {
+    for (model in models) {
+      if (models.hasOwnProperty(model)) {
+        initModel.call(this, model);
+      }
+    }
+
+    this.$element.trigger('dynatable:init', this);
+
+    if (!this.settings.dataset.ajax || (this.settings.dataset.ajax && this.settings.dataset.ajaxOnLoad) || this.settings.features.paginate) {
+      this.process();
+    }
+  };
+
+  initModel = function(model) {
+    var modelInstance = this[model] = Object.create(models[model]).setInstance(this);
+    if (modelInstance.initOnLoad()) {
+      modelInstance.init();
+    }
+  };
 
   $.dynatableSetup = function(options) {
-    $.extend(true, globalDefaults, options);
-  }
+    defaults = mergeSettings(options);
+  };
 
-  dynatable = dt = {
-    defaults: {
-      features: {
-        paginate: true,
-        sort: true,
-        pushState: true,
-        search: true,
-        recordCount: true,
-        perPageSelect: true
-      },
-      table: {
-        defaultColumnIdStyle: 'camelCase',
-        columns: null,
-        headRowSelector: 'thead tr', // or e.g. tr:first-child
-        bodyRowSelector: 'tbody tr',
-        headRowClass: null,
-        rowFilter: function(rowIndex, record, columns, cellFilter) {
-          var $tr = $('<tr></tr>');
-
-          // grab the record's attribute for each column
-          $.each(columns, function(colIndex, column) {
-            var html = column.dataFilter(record),
-            $td = cellFilter(html);
-
-            if (column.hidden) {
-              $td.hide();
-            }
-            if (column.textAlign) {
-              $td.css('text-align', column.textAlign);
-            }
-            $tr.append($td);
-          });
-
-          return $tr;
-        },
-        cellFilter: function(html) {
-          return $('<td></td>', {
-            html: html
-          });
-        }
-      },
-      inputs: {
-        queries: null,
-        sorts: null,
-        multisort: ['ctrlKey', 'shiftKey', 'metaKey'],
-        page: null,
-        queryEvent: 'blur change',
-        recordCountTarget: null,
-        recordCountPlacement: 'after',
-        paginationLinkTarget: null,
-        paginationLinkPlacement: 'after',
-        paginationPrev: 'Previous',
-        paginationNext: 'Next',
-        paginationGap: [1,2,2,1],
-        searchTarget: null,
-        searchPlacement: 'before',
-        perPageTarget: null,
-        perPagePlacement: 'before',
-        perPageText: 'Show: ',
-        recordCountText: 'Showing ',
-        processingText: 'Processing...'
-      },
-      dataset: {
-        ajax: false,
-        ajaxUrl: null,
-        ajaxCache: null,
-        ajaxOnLoad: false,
-        ajaxMethod: 'GET',
-        ajaxDataType: 'json',
-        totalRecordCount: null,
-        queries: {},
-        queryRecordCount: null,
-        page: null,
-        perPageDefault: 10,
-        perPageOptions: [10,20,50,100],
-        sorts: {},
-        sortsKeys: null,
-        sortTypes: {},
-        records: null
-      },
-      filters: {},
-      unfilters: {},
-      params: {
-        dynatable: 'dynatable',
-        queries: 'queries',
-        sorts: 'sorts',
-        page: 'page',
-        perPage: 'perPage',
-        offset: 'offset',
-        records: 'records',
-        record: null,
-        queryRecordCount: 'queryRecordCount',
-        totalRecordCount: 'totalRecordCount'
-      }
-    },
-
-    init: function(options, element) {
-      this.settings = this._extend(options);
+  dt = {
+    init: function(element, options) {
+      this.settings = mergeSettings(options);
       this.element = element;
       this.$element = $(element);
-      this._build();
+
+      build.call(this);
+
       return this;
-    },
-
-    _build: function() {
-      for (model in models) {
-        if (models.hasOwnProperty(model)) {
-          this._checkAndInitModel(model);
-        }
-      }
-
-      this.$element.trigger('dynatable:init', this);
-
-      if (!this.settings.dataset.ajax || (this.settings.dataset.ajax && this.settings.dataset.ajaxOnLoad) || this.settings.features.paginate) {
-        this.process();
-      }
-    },
-
-    _checkAndInitModel: function(model) {
-      var modelInstance = this[model] = Object.create(models[model]).setInstance(this);
-      if (modelInstance.initOnLoad()) {
-        modelInstance.init();
-      }
-    },
-
-    _extend: function(options) {
-      // TODO: figure out a better way to do this.
-      // Doing `extend(true)` causes any elements that are arrays
-      // to merge the default and options arrays instead of overriding the defaults.
-      if (options) {
-        if (options.inputs) {
-          if (options.inputs.multisort) {
-            this.defaults.inputs.multisort = undefined;
-            if (globalDefaults.inputs && globalDefaults.inputs.multisort) {
-              globalDefaults.inputs.multisort = undefined;
-            }
-          }
-          if (options.inputs.paginationGap) {
-            this.defaults.inputs.paginationGap = undefined;
-            if (globalDefaults.inputs && globalDefaults.inputs.paginationGap) {
-              globalDefaults.inputs.paginationGap = undefined;
-            }
-          }
-        }
-        if (options.dataset && options.dataset.perPageOptions) {
-          this.defaults.dataset.perPageOptions = undefined;
-          if (globalDefaults.dataset && globalDefaults.dataset.perPageOptions) {
-            globalDefaults.dataset.perPageOptions = undefined;
-          }
-        }
-      }
-      return $.extend(true, {}, this.defaults, globalDefaults, options);
     },
 
     // if non-ajax, executes queries and sorts on in-page data
@@ -1452,13 +1453,12 @@
     $.fn['dynatable'] = function( options ) {
       return this.each(function() {
         if ( ! $.data( this, 'dynatable' ) ) {
-          $.data( this, 'dynatable', Object.create(object).init(
-            options, this ) );
+          $.data( this, 'dynatable', Object.create(object).init(this, options) );
         }
       });
     };
   };
 
-  $.dynatable(dynatable);
+  $.dynatable(dt);
 
 })(jQuery);
