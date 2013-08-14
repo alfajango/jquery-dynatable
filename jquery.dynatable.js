@@ -28,6 +28,7 @@
       models = {},
       utility,
       build,
+      processAll,
       initModel;
 
   defaults = {
@@ -169,6 +170,78 @@
     }
   };
 
+  processAll = function(skipPushState) {
+    var data = {};
+
+    this.$element.trigger('dynatable:beforeProcess', data);
+
+    if (!$.isEmptyObject(this.settings.dataset.queries)) { data[this.settings.params.queries] = this.settings.dataset.queries; }
+    // TODO: Wrap this in a try/rescue block to hide the processing indicator and indicate something went wrong if error
+    this.processingIndicator.show();
+
+    if (this.settings.features.sort && !$.isEmptyObject(this.settings.dataset.sorts)) { data[this.settings.params.sorts] = this.settings.dataset.sorts; }
+    if (this.settings.features.paginate && this.settings.dataset.page) {
+      var page = this.settings.dataset.page,
+          perPage = this.settings.dataset.perPage;
+      data[this.settings.params.page] = page;
+      data[this.settings.params.perPage] = perPage;
+      data[this.settings.params.offset] = (page - 1) * perPage;
+    }
+    if (this.settings.dataset.ajaxData) { $.extend(data, this.settings.dataset.ajaxData); }
+
+    if (this.settings.dataset.ajax) {
+      var options = {
+        type: this.settings.dataset.ajaxMethod,
+        dataType: this.settings.dataset.ajaxDataType,
+        data: data,
+        success: function(response) {
+          this.$element.trigger('dynatable:ajax:success', response);
+          // Merge ajax results and meta-data into dynatables cached data
+          this.records.updateFromJson(response);
+          // update table with new records
+          this.dom.update();
+
+          if (this.settings.features.pushState && !skipPushState && history.pushState) {
+            this.state.push(data);
+          }
+        },
+        complete: function() {
+          this.processingIndicator.hide();
+        }
+      };
+      // Do not pass url to `ajax` options if blank
+      if (this.settings.dataset.ajaxUrl) {
+        options.url = this.settings.dataset.ajaxUrl;
+
+      // If ajaxUrl is blank, then we're using the current page URL,
+      // we need to strip out any query, sort, or page data controlled by dynatable
+      // that may have been in URL when page loaded, so that it doesn't conflict with
+      // what's passed in with the data ajax parameter
+      } else {
+        options.url = utility.refreshQueryString(window.location.href, {}, this.settings);
+      }
+      if (this.settings.dataset.ajaxCache !== null) { options.cache = this.settings.dataset.ajaxCache; }
+
+      $.ajax(options);
+    } else {
+      this.records.resetOriginal();
+      this.queries.run();
+      if (this.settings.features.sort) {
+        this.records.sort();
+      }
+      if (this.settings.features.paginate) {
+        this.records.paginate();
+      }
+      this.dom.update();
+      this.processingIndicator.hide();
+
+      if (this.settings.features.pushState && !skipPushState && history.pushState) {
+        this.state.push(data);
+      }
+    }
+    this.$element.trigger('dynatable:afterProcess', data);
+  };
+
   $.dynatableSetup = function(options) {
     defaults = mergeSettings(options);
   };
@@ -187,75 +260,7 @@
     // if non-ajax, executes queries and sorts on in-page data
     // otherwise, sends query to ajaxUrl with queries and sorts serialized and appended in ajax data
     process: function(skipPushState) {
-      var data = {};
-
-      this.$element.trigger('dynatable:beforeProcess', data);
-
-      if (!$.isEmptyObject(this.settings.dataset.queries)) { data[this.settings.params.queries] = this.settings.dataset.queries; }
-      // TODO: Wrap this in a try/rescue block to hide the processing indicator and indicate something went wrong if error
-      this.processingIndicator.show();
-
-      if (this.settings.features.sort && !$.isEmptyObject(this.settings.dataset.sorts)) { data[this.settings.params.sorts] = this.settings.dataset.sorts; }
-      if (this.settings.features.paginate && this.settings.dataset.page) {
-        var page = this.settings.dataset.page,
-            perPage = this.settings.dataset.perPage;
-        data[this.settings.params.page] = page;
-        data[this.settings.params.perPage] = perPage;
-        data[this.settings.params.offset] = (page - 1) * perPage;
-      }
-      if (this.settings.dataset.ajaxData) { $.extend(data, this.settings.dataset.ajaxData); }
-
-      if (this.settings.dataset.ajax) {
-        var options = {
-          type: this.settings.dataset.ajaxMethod,
-          dataType: this.settings.dataset.ajaxDataType,
-          data: data,
-          success: function(response) {
-            this.$element.trigger('dynatable:ajax:success', response);
-            // Merge ajax results and meta-data into dynatables cached data
-            this.records.updateFromJson(response);
-            // update table with new records
-            this.dom.update();
-
-            if (this.settings.features.pushState && !skipPushState && history.pushState) {
-              this.state.push(data);
-            }
-          },
-          complete: function() {
-            this.processingIndicator.hide();
-          }
-        };
-        // Do not pass url to `ajax` options if blank
-        if (this.settings.dataset.ajaxUrl) {
-          options.url = this.settings.dataset.ajaxUrl;
-
-        // If ajaxUrl is blank, then we're using the current page URL,
-        // we need to strip out any query, sort, or page data controlled by dynatable
-        // that may have been in URL when page loaded, so that it doesn't conflict with
-        // what's passed in with the data ajax parameter
-        } else {
-          options.url = utility.refreshQueryString(window.location.href, {}, this.settings);
-        }
-        if (this.settings.dataset.ajaxCache !== null) { options.cache = this.settings.dataset.ajaxCache; }
-
-        $.ajax(options);
-      } else {
-        this.records.resetOriginal();
-        this.queries.run();
-        if (this.settings.features.sort) {
-          this.records.sort();
-        }
-        if (this.settings.features.paginate) {
-          this.records.paginate();
-        }
-        this.dom.update();
-        this.processingIndicator.hide();
-
-        if (this.settings.features.pushState && !skipPushState && history.pushState) {
-          this.state.push(data);
-        }
-      }
-      this.$element.trigger('dynatable:afterProcess', data);
+      processAll.call(this, skipPushState);
     }
   };
 
