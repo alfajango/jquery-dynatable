@@ -213,23 +213,24 @@
     // If ajax, sends query to ajaxUrl with queries and sorts serialized and appended in ajax data
     // otherwise, executes queries and sorts on in-page data
     if (this.settings.dataset.ajax) {
+      var _this = this;
       var options = {
         type: this.settings.dataset.ajaxMethod,
         dataType: this.settings.dataset.ajaxDataType,
         data: data,
         success: function(response) {
-          this.$element.trigger('dynatable:ajax:success', response);
+          _this.$element.trigger('dynatable:ajax:success', response);
           // Merge ajax results and meta-data into dynatables cached data
-          this.records.updateFromJson(response);
+          _this.records.updateFromJson(response);
           // update table with new records
-          this.dom.update();
+          _this.dom.update();
 
           if (this.settings.features.pushState && !skipPushState && history.pushState) {
-            this.state.push(data);
+            _this.state.push(data);
           }
         },
         complete: function() {
-          this.processingIndicator.hide();
+          _this.processingIndicator.hide();
         }
       };
       // Do not pass url to `ajax` options if blank
