@@ -12,6 +12,10 @@
 //
 
 (function($) {
+  //-----------------------------------------------------------------
+  // Cached plugin global defaults and functions
+  //-----------------------------------------------------------------
+
   var defaults,
       mergeSettings,
       dt,
@@ -180,6 +184,8 @@
     }
     if (this.settings.dataset.ajaxData) { $.extend(data, this.settings.dataset.ajaxData); }
 
+    // If ajax, sends query to ajaxUrl with queries and sorts serialized and appended in ajax data
+    // otherwise, executes queries and sorts on in-page data
     if (this.settings.dataset.ajax) {
       var options = {
         type: this.settings.dataset.ajaxMethod,
@@ -233,9 +239,18 @@
     this.$element.trigger('dynatable:afterProcess', data);
   };
 
+  //-----------------------------------------------------------------
+  // Global dynatable plugin setting defaults
+  //-----------------------------------------------------------------
+
   $.dynatableSetup = function(options) {
     defaults = mergeSettings(options);
   };
+
+  //-----------------------------------------------------------------
+  // Each dynatable instance inherits from this,
+  // set properties specific to instance
+  //-----------------------------------------------------------------
 
   dt = {
     init: function(element, options) {
@@ -248,12 +263,15 @@
       return this;
     },
 
-    // if non-ajax, executes queries and sorts on in-page data
-    // otherwise, sends query to ajaxUrl with queries and sorts serialized and appended in ajax data
     process: function(skipPushState) {
       processAll.call(this, skipPushState);
     }
   };
+
+  //-----------------------------------------------------------------
+  // Dynatable object model prototype constructor
+  // (all object models get these default functions)
+  //-----------------------------------------------------------------
 
   Model = function() {
     this.extend = function(props) {
@@ -278,6 +296,10 @@
 
     return this;
   };
+
+  //-----------------------------------------------------------------
+  // Dynatable object models
+  //-----------------------------------------------------------------
 
   models.dom = (new Model).extend({
     // update table contents with new records array
@@ -1448,6 +1470,10 @@
       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
     }
   };
+
+  //-----------------------------------------------------------------
+  // Build the dynatable plugin
+  //-----------------------------------------------------------------
 
   // Object.create support test, and fallback for browsers without it
   if ( typeof Object.create !== "function" ) {
