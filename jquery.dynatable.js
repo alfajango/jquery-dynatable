@@ -12,10 +12,6 @@
 //
 
 (function($) {
-  //-----------------------------------------------------------------
-  // Cached plugin global defaults and functions
-  //-----------------------------------------------------------------
-
   var defaults,
       mergeSettings,
       dt,
@@ -25,6 +21,10 @@
       build,
       processAll,
       initModel;
+
+  //-----------------------------------------------------------------
+  // Cached plugin global defaults
+  //-----------------------------------------------------------------
 
   defaults = {
     features: {
@@ -120,6 +120,32 @@
       totalRecordCount: 'totalRecordCount'
     }
   };
+
+  //-----------------------------------------------------------------
+  // Each dynatable instance inherits from this,
+  // set properties specific to instance
+  //-----------------------------------------------------------------
+
+  dt = {
+    init: function(element, options) {
+      this.settings = mergeSettings(options);
+      this.element = element;
+      this.$element = $(element);
+
+      // All the setup that doesn't require element or options
+      build.call(this);
+
+      return this;
+    },
+
+    process: function(skipPushState) {
+      processAll.call(this, skipPushState);
+    }
+  };
+
+  //-----------------------------------------------------------------
+  // Cached plugin global functions
+  //-----------------------------------------------------------------
 
   mergeSettings = function(options) {
     var newOptions = $.extend(true, {}, defaults, options);
@@ -237,36 +263,6 @@
       }
     }
     this.$element.trigger('dynatable:afterProcess', data);
-  };
-
-  //-----------------------------------------------------------------
-  // Global dynatable plugin setting defaults
-  //-----------------------------------------------------------------
-
-  $.dynatableSetup = function(options) {
-    defaults = mergeSettings(options);
-  };
-
-  //-----------------------------------------------------------------
-  // Each dynatable instance inherits from this,
-  // set properties specific to instance
-  //-----------------------------------------------------------------
-
-  dt = {
-    init: function(element, options) {
-      this.settings = mergeSettings(options);
-      this.element = element;
-      this.$element = $(element);
-
-      // All the setup that doesn't require element or options
-      build.call(this);
-
-      return this;
-    },
-
-    process: function(skipPushState) {
-      processAll.call(this, skipPushState);
-    }
   };
 
   //-----------------------------------------------------------------
@@ -1508,6 +1504,14 @@
       return new F();
     };
   }
+
+  //-----------------------------------------------------------------
+  // Global dynatable plugin setting defaults
+  //-----------------------------------------------------------------
+
+  $.dynatableSetup = function(options) {
+    defaults = mergeSettings(options);
+  };
 
   // Create dynatable plugin based on a defined object
   $.dynatable = function( object ) {
