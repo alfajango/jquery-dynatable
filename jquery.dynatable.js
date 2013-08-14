@@ -578,7 +578,7 @@
       this.obj.settings.dataset.records = this.obj.settings.dataset.records.slice(first, last);
     };
     this.resetOriginal = function() {
-      this.obj.settings.dataset.records = $.extend(true, [], this.obj.settings.dataset.originalRecords);
+      this.obj.settings.dataset.records = this.obj.settings.dataset.originalRecords || [];
     };
     this.pageBounds = function() {
       var page = this.obj.settings.dataset.page || 1,
