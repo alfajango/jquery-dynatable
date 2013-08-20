@@ -511,17 +511,19 @@
   Records.prototype = Model;
   function Records() {
     this.initOnLoad = function() {
-      return this.obj.settings.dataset.records === null && !this.obj.settings.dataset.ajax;
+      return !this.obj.settings.dataset.ajax;
     };
     this.init = function() {
-      this.obj.settings.dataset.records = this.getFromTable();
+      if (this.obj.settings.dataset.records === null) {
+        this.obj.settings.dataset.records = this.getFromTable();
 
-      if (!this.obj.settings.dataset.queryRecordCount) {
-        this.obj.settings.dataset.queryRecordCount = this.count();
-      }
+        if (!this.obj.settings.dataset.queryRecordCount) {
+          this.obj.settings.dataset.queryRecordCount = this.count();
+        }
 
-      if (!this.obj.settings.dataset.totalRecordCount){
-        this.obj.settings.dataset.totalRecordCount = this.obj.settings.dataset.queryRecordCount;
+        if (!this.obj.settings.dataset.totalRecordCount){
+          this.obj.settings.dataset.totalRecordCount = this.obj.settings.dataset.queryRecordCount;
+        }
       }
 
       // Create cache of original full recordset (unpaginated and unqueried)
