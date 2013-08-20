@@ -216,9 +216,11 @@
     if (this.settings.dataset.ajax) {
       var _this = this;
       var options = {
-        type: this.settings.dataset.ajaxMethod,
-        dataType: this.settings.dataset.ajaxDataType,
+        type: _this.settings.dataset.ajaxMethod,
+        dataType: _this.settings.dataset.ajaxDataType,
         data: data,
+        error: function(xhr, error) {
+        },
         success: function(response) {
           _this.$element.trigger('dynatable:ajax:success', response);
           // Merge ajax results and meta-data into dynatables cached data
@@ -226,7 +228,7 @@
           // update table with new records
           _this.dom.update();
 
-          if (this.settings.features.pushState && !skipPushState && history.pushState) {
+          if (_this.settings.features.pushState && !skipPushState && history.pushState) {
             _this.state.push(data);
           }
         },
