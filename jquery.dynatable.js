@@ -35,7 +35,11 @@
       utility,
       build,
       processAll,
-      initModel;
+      initModel,
+      defaultRowFilter,
+      defaultCellFilter,
+      defaultAttributeFilter,
+      defaultAttributeUnfilter;
 
   //-----------------------------------------------------------------
   // Cached plugin global defaults
@@ -55,9 +59,7 @@
       columns: null,
       headRowSelector: 'thead tr', // or e.g. tr:first-child
       bodyRowSelector: 'tbody tr',
-      headRowClass: null,
-      rowFilter: null,
-      cellFilter: null
+      headRowClass: null
     },
     inputs: {
       queries: null,
@@ -98,8 +100,15 @@
       sortTypes: {},
       records: null
     },
-    filters: {},
-    unfilters: {},
+    filters: {
+      _rowFilter: defaultRowFilter,
+      _cellFilter: defaultCellFilter,
+      _attributeFilter: defaultAttributeFilter
+    },
+    unfilters: {
+      _rowUnfilter: null,
+      _attributeUnfilter: defaultAttributeUnfilter
+    },
     params: {
       dynatable: 'dynatable',
       queries: 'queries',
@@ -261,6 +270,43 @@
     this.$element.trigger('dynatable:afterProcess', data);
   };
 
+  function defaultRowFilter(rowIndex, record, columns, cellFilter) {
+    var $tr = $('<tr></tr>');
+
+    // grab the record's attribute for each column
+    for (var i = 0, len = columns.length; i < len; i++) {
+      var column = columns[i],
+      html = column.dataFilter(record),
+      $td = cellFilter(html);
+
+      if (column.hidden) {
+        $td.hide();
+      }
+      if (column.textAlign) {
+        $td.css('text-align', column.textAlign);
+      }
+      $tr.append($td);
+    }
+
+    return $tr;
+  };
+
+  function defaultCellFilter(html) {
+    return $('<td></td>', {
+      html: html
+    });
+  };
+
+  function defaultAttributeFilter(record) {
+    // `this` is the column object in this.obj.settings.columns
+    // TODO: automatically convert common types, such as arrays and objects, to string
+    return record[this.id];
+  };
+
+  function defaultAttributeUnfilter(cell, record) {
+    return $(cell).html();
+  };
+
   //-----------------------------------------------------------------
   // Dynatable object model prototype
   // (all object models get these default functions)
@@ -307,8 +353,8 @@
       var _this = this,
           $rows = $(),
           columns = this.obj.settings.table.columns,
-          rowFilter = this.obj.settings.table.rowFilter || this.defaultRowFilter,
-          cellFilter = this.obj.settings.table.cellFilter || this.defaultCellFilter;
+          rowFilter = this.obj.settings.filters._rowFilter,
+          cellFilter = this.obj.settings.filters._cellFilter;
 
       this.obj.$element.trigger('dynatable:beforeUpdate', $rows);
 
@@ -363,33 +409,6 @@
 
       this.obj.$element.trigger('dynatable:afterUpdate', $rows);
     };
-
-    this.defaultRowFilter = function(rowIndex, record, columns, cellFilter) {
-      var $tr = $('<tr></tr>');
-
-      // grab the record's attribute for each column
-      for (var i = 0, len = columns.length; i < len; i++) {
-        var column = columns[i],
-        html = column.dataFilter(record),
-        $td = cellFilter(html);
-
-        if (column.hidden) {
-          $td.hide();
-        }
-        if (column.textAlign) {
-          $td.css('text-align', column.textAlign);
-        }
-        $tr.append($td);
-      }
-
-      return $tr;
-    };
-
-    this.defaultCellFilter = function(html) {
-      return $('<td></td>', {
-        html: html
-      });
-    };
   };
 
   function DomColumns() {
@@ -429,8 +448,8 @@
         index: position,
         label: label,
         id: id,
-        dataFilter: this.obj.settings.filters[id] || this.defaultFilter,
-        dataUnfilter: this.obj.settings.unfilters[id] || this.defaultUnfilter,
+        dataFilter: this.obj.settings.filters[id] || this.obj.settings.filters._attributeFilter,
+        dataUnfilter: this.obj.settings.unfilters[id] || this.obj.settings.unfilters._attributeUnfilter,
         sorts: sorts,
         hidden: $column.css('display') === 'none',
         textAlign: $column.css('text-align')
@@ -507,14 +526,6 @@
       for (var i = 0, len = adjustColumns.length; i < len; i++) {
         adjustColumns[i].index -= 1;
       }
-    };
-    this.defaultFilter = function(record) {
-      // `this` is the column object in this.obj.settings.columns
-      // TODO: automatically convert common types, such as arrays and objects, to string
-      return record[this.id];
-    };
-    this.defaultUnfilter = function(cell, record) {
-      return $(cell).html();
     };
     this.generate = function($cell) {
       var cell = $cell === undefined ? $('<th></th>') : $cell;
@@ -653,8 +664,8 @@
         });
         // Allow configuration function which alters record based on attributes of
         // table row (e.g. from html5 data- attributes)
-        if (typeof(_this.obj.settings.table.rowUnfilter) === "function") {
-          _this.obj.settings.table.rowUnfilter(index, this, record);
+        if (typeof(_this.obj.settings.unfilters._rowUnfilter) === "function") {
+          _this.obj.settings.unfilters._rowUnfilter(index, this, record);
         }
         records.push(record);
       });
