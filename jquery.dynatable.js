@@ -17,6 +17,21 @@
       dt,
       Model,
       models = {},
+      modelPrototypes = {
+        dom: Dom,
+        domColumns: DomColumns,
+        records: Records,
+        recordsCount: RecordsCount,
+        processingIndicator: ProcessingIndicator,
+        state: State,
+        sorts: Sorts,
+        sortsHeaders: SortsHeaders,
+        queries: Queries,
+        inputsSearch: InputsSearch,
+        paginationPage: PaginationPage,
+        paginationPerPage: PaginationPerPage,
+        paginationLinks: PaginationLinks
+      },
       utility,
       build,
       processAll,
@@ -296,11 +311,18 @@
     init: function() {}
   };
 
+  for (model in modelPrototypes) {
+    if (modelPrototypes.hasOwnProperty(model)) {
+      var modelPrototype = modelPrototypes[model];
+      modelPrototype.prototype = Model;
+      models[model] = modelPrototype;
+    }
+  }
+
   //-----------------------------------------------------------------
   // Dynatable object models
   //-----------------------------------------------------------------
 
-  Dom.prototype = Model;
   function Dom() {
     // update table contents with new records array
     // from query (whether ajax or not)
@@ -365,9 +387,7 @@
       this.obj.$element.trigger('dynatable:afterUpdate', $rows);
     };
   };
-  models.dom = Dom;
 
-  DomColumns.prototype = Model;
   function DomColumns() {
     this.initOnLoad = function() {
       return this.obj.$element.is('table');
@@ -506,9 +526,7 @@
         .attr('data-dynatable-generated', increment);
     };
   };
-  models.domColumns = DomColumns;
 
-  Records.prototype = Model;
   function Records() {
     this.initOnLoad = function() {
       return !this.obj.settings.dataset.ajax;
@@ -643,9 +661,7 @@
       return this.obj.settings.dataset.records.length;
     };
   };
-  models.records = Records;
 
-  RecordsCount.prototype = Model;
   function RecordsCount() {
     this.initOnLoad = function() {
       return this.obj.settings.features.recordCount;
@@ -682,9 +698,7 @@
       $target[this.obj.settings.inputs.recordCountPlacement](this.create());
     };
   };
-  models.recordsCount = RecordsCount;
 
-  ProcessingIndicator.prototype = Model;
   function ProcessingIndicator() {
     this.init = function() {
       this.attach();
@@ -728,9 +742,7 @@
       $('#dynatable-processing-' + this.obj.element.id).hide();
     };
   };
-  models.processingIndicator = ProcessingIndicator;
 
-  State.prototype = Model;
   function State() {
     this.initOnLoad = function() {
       // Check if pushState option is true, and if browser supports it
@@ -793,9 +805,7 @@
       }
     };
   };
-  models.state = State;
 
-  Sorts.prototype = Model;
   function Sorts() {
     this.initOnLoad = function() {
       return this.obj.settings.features.sort;
@@ -858,9 +868,7 @@
       }
     };
   };
-  models.sorts = Sorts;
 
-  SortsHeaders.prototype = Model;
   // turn table headers into links which add sort to sorts array
   function SortsHeaders() {
     this.initOnLoad = function() {
@@ -964,9 +972,7 @@
       return this.obj.settings.dataset.sorts[column.sorts[0]];
     };
   };
-  models.sortsHeaders = SortsHeaders;
 
-  Queries.prototype = Model;
   function Queries() {
   // For ajax, to add a query, just do
     this.initOnLoad = function() {
@@ -1085,9 +1091,7 @@
       }
     };
   };
-  models.queries = Queries;
 
-  InputsSearch.prototype = Model;
   function InputsSearch() {
     this.initOnLoad = function() {
       return this.obj.settings.features.search;
@@ -1125,9 +1129,7 @@
       $target[this.obj.settings.inputs.searchPlacement](this.create());
     };
   };
-  models.inputsSearch = InputsSearch;
 
-  PaginationPage.prototype = Model;
   function PaginationPage() {
   // provide a public function for selecting page
     this.initOnLoad = function() {
@@ -1141,9 +1143,7 @@
       this.obj.settings.dataset.page = parseInt(page, 10);
     }
   };
-  models.paginationPage = PaginationPage;
 
-  PaginationPerPage.prototype = Model;
   function PaginationPerPage() {
     this.initOnLoad = function() {
       return this.obj.settings.features.paginate;
@@ -1192,9 +1192,7 @@
       this.obj.settings.dataset.perPage = parseInt(number);
     };
   };
-  models.paginationPerPage = PaginationPerPage;
 
-  PaginationLinks.prototype = Model;
   function PaginationLinks() {
   // pagination links which update dataset.page attribute
     this.initOnLoad = function() {
@@ -1294,7 +1292,6 @@
       $target[this.obj.settings.inputs.paginationLinkPlacement](this.obj.paginationLinks.create());
     };
   };
-  models.paginationLinks = PaginationLinks;
 
   utility = {
     normalizeText: function(text, style) {
