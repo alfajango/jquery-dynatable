@@ -56,31 +56,8 @@
       headRowSelector: 'thead tr', // or e.g. tr:first-child
       bodyRowSelector: 'tbody tr',
       headRowClass: null,
-      rowFilter: function(rowIndex, record, columns, cellFilter) {
-        var $tr = $('<tr></tr>');
-
-        // grab the record's attribute for each column
-        for (var i = 0, len = columns.length; i < len; i++) {
-          var column = columns[i],
-              html = column.dataFilter(record),
-          $td = cellFilter(html);
-
-          if (column.hidden) {
-            $td.hide();
-          }
-          if (column.textAlign) {
-            $td.css('text-align', column.textAlign);
-          }
-          $tr.append($td);
-        }
-
-        return $tr;
-      },
-      cellFilter: function(html) {
-        return $('<td></td>', {
-          html: html
-        });
-      }
+      rowFilter: null,
+      cellFilter: null
     },
     inputs: {
       queries: null,
@@ -330,8 +307,8 @@
       var _this = this,
           $rows = $(),
           columns = this.obj.settings.table.columns,
-          rowFilter = this.obj.settings.table.rowFilter,
-          cellFilter = this.obj.settings.table.cellFilter;
+          rowFilter = this.obj.settings.table.rowFilter || this.defaultRowFilter,
+          cellFilter = this.obj.settings.table.cellFilter || this.defaultCellFilter;
 
       this.obj.$element.trigger('dynatable:beforeUpdate', $rows);
 
@@ -385,6 +362,33 @@
       this.obj.$element.append($rows);
 
       this.obj.$element.trigger('dynatable:afterUpdate', $rows);
+    };
+
+    this.defaultRowFilter = function(rowIndex, record, columns, cellFilter) {
+      var $tr = $('<tr></tr>');
+
+      // grab the record's attribute for each column
+      for (var i = 0, len = columns.length; i < len; i++) {
+        var column = columns[i],
+        html = column.dataFilter(record),
+        $td = cellFilter(html);
+
+        if (column.hidden) {
+          $td.hide();
+        }
+        if (column.textAlign) {
+          $td.css('text-align', column.textAlign);
+        }
+        $tr.append($td);
+      }
+
+      return $tr;
+    };
+
+    this.defaultCellFilter = function(html) {
+      return $('<td></td>', {
+        html: html
+      });
     };
   };
 
