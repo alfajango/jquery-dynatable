@@ -16,7 +16,6 @@
       mergeSettings,
       dt,
       Model,
-      models = {},
       modelPrototypes = {
         dom: Dom,
         domColumns: DomColumns,
@@ -173,9 +172,12 @@
   };
 
   build = function() {
-    for (model in models) {
-      if (models.hasOwnProperty(model)) {
-        initModel.call(this, model);
+    for (model in modelPrototypes) {
+      if (modelPrototypes.hasOwnProperty(model)) {
+        var modelInstance = this[model] = new modelPrototypes[model](this, this.settings);
+        if (modelInstance.initOnLoad()) {
+          modelInstance.init();
+        }
       }
     }
 
@@ -183,13 +185,6 @@
 
     if (!this.settings.dataset.ajax || (this.settings.dataset.ajax && this.settings.dataset.ajaxOnLoad) || this.settings.features.paginate) {
       this.process();
-    }
-  };
-
-  initModel = function(model) {
-    var modelInstance = this[model] = new models[model](this, this.settings);
-    if (modelInstance.initOnLoad()) {
-      modelInstance.init();
     }
   };
 
@@ -324,7 +319,6 @@
     if (modelPrototypes.hasOwnProperty(model)) {
       var modelPrototype = modelPrototypes[model];
       modelPrototype.prototype = Model;
-      models[model] = modelPrototype;
     }
   }
 
