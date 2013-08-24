@@ -404,10 +404,12 @@
     this.initOnLoad = function() {
       return obj.$element.is('table');
     };
+
     this.init = function() {
       settings.table.columns = [];
       this.getFromTable();
     };
+
     // initialize table[columns] array
     this.getFromTable = function() {
       var $columns = obj.$element.find(settings.table.headRowSelector).children('th,td');
@@ -419,6 +421,7 @@
         return $.error("Couldn't find any columns headers in '" + settings.table.headRowSelector + " th,td'. If your header row is different, specify the selector in the table: headRowSelector option.");
       }
     };
+
     this.add = function($column, position, skipAppend, skipUpdate) {
       var columns = settings.table.columns,
           label = $column.text(),
@@ -479,6 +482,7 @@
 
       return dt;
     };
+
     this.remove = function(columnIndexOrId) {
       var columns = settings.table.columns,
           length = columns.length;
@@ -502,10 +506,12 @@
 
       obj.dom.update();
     };
+
     this.removeFromTable = function(columnId) {
       obj.$element.find(settings.table.headRowSelector).children('[data-dynatable-column="' + columnId + '"]').first()
         .remove();
     };
+
     this.removeFromArray = function(index) {
       var columns = settings.table.columns,
           adjustColumns;
@@ -515,10 +521,12 @@
         adjustColumns[i].index -= 1;
       }
     };
+
     this.generate = function($cell) {
       var cell = $cell === undefined ? $('<th></th>') : $cell;
       return this.attachGeneratedAttributes(cell);
     };
+
     this.attachGeneratedAttributes = function($cell) {
       // Use increment to create unique column name that is the same each time the page is reloaded,
       // in order to avoid errors with mismatched attribute names when loading cached `dataset.records` array
@@ -536,6 +544,7 @@
     this.initOnLoad = function() {
       return !settings.dataset.ajax;
     };
+
     this.init = function() {
       if (settings.dataset.records === null) {
         settings.dataset.records = this.getFromTable();
@@ -552,6 +561,7 @@
       // Create cache of original full recordset (unpaginated and unqueried)
       settings.dataset.originalRecords = $.extend(true, [], settings.dataset.records);
     };
+
     // merge ajax response json with cached data including
     // meta-data and records
     this.updateFromJson = function(data) {
@@ -575,6 +585,7 @@
       }
       settings.dataset.records = records;
     };
+
     // For really advanced sorting,
     // see http://james.padolsey.com/javascript/sorting-elements-with-jquery/
     this.sort = function() {
@@ -603,20 +614,24 @@
 
       return sort.call(settings.dataset.records, sortFunction);
     };
+
     this.paginate = function() {
       var bounds = this.pageBounds(),
           first = bounds[0], last = bounds[1];
       settings.dataset.records = settings.dataset.records.slice(first, last);
     };
+
     this.resetOriginal = function() {
       settings.dataset.records = settings.dataset.originalRecords || [];
     };
+
     this.pageBounds = function() {
       var page = settings.dataset.page || 1,
           first = (page - 1) * settings.dataset.perPage,
           last = Math.min(first + settings.dataset.perPage, settings.dataset.queryRecordCount);
       return [first,last];
     };
+
     // get initial recordset to populate table
     // if ajax, call ajaxUrl
     // otherwise, initialize from in-table records
@@ -659,6 +674,7 @@
       });
       return records; // 1st row is header
     };
+
     // count records from table
     this.count = function() {
       return settings.dataset.records.length;
@@ -669,9 +685,11 @@
     this.initOnLoad = function() {
       return settings.features.recordCount;
     };
+
     this.init = function() {
       this.attach();
     };
+
     this.create = function() {
       var recordsShown = obj.records.count(),
           recordsQueryCount = settings.dataset.queryRecordCount,
@@ -696,6 +714,7 @@
                 html: text
               });
     };
+
     this.attach = function() {
       var $target = settings.inputs.recordCountTarget ? $(settings.inputs.recordCountTarget) : obj.$element;
       $target[settings.inputs.recordCountPlacement](this.create());
@@ -706,6 +725,7 @@
     this.init = function() {
       this.attach();
     };
+
     this.create = function() {
       var $processing = $('<div></div>', {
             html: '<span>' + settings.inputs.processingText + '</span>',
@@ -716,6 +736,7 @@
 
       return $processing;
     };
+
     this.position = function() {
       var $processing = $('#dynatable-processing-' + obj.element.id),
           $span = $processing.children('span'),
@@ -734,13 +755,16 @@
 
       return $processing;
     };
+
     this.attach = function() {
       obj.$element.before(this.create());
     };
+
     this.show = function() {
       $('#dynatable-processing-' + obj.element.id).show();
       this.position();
     };
+
     this.hide = function() {
       $('#dynatable-processing-' + obj.element.id).hide();
     };
@@ -751,6 +775,7 @@
       // Check if pushState option is true, and if browser supports it
       return settings.features.pushState && history.pushState;
     };
+
     this.init = function() {
       window.onpopstate = function(event) {
         if (event.state && event.state.dynatable) {
@@ -758,6 +783,7 @@
         }
       }
     };
+
     this.push = function(data) {
       var urlString = window.location.search,
           urlOptions,
@@ -796,6 +822,7 @@
         window.history.pushState(cache, "Dynatable state", '?' + params);
       }
     };
+
     this.pop = function(event) {
       var data = event.state.dynatable;
       settings.dataset = data.dataset;
@@ -813,11 +840,13 @@
     this.initOnLoad = function() {
       return settings.features.sort;
     };
+
     this.init = function() {
       var sortsUrl = window.location.search.match(new RegExp(settings.params.sorts + '[^&=]*=[^&]*', 'g'));
       settings.dataset.sorts = sortsUrl ? utility.deserialize(sortsUrl)[settings.params.sorts] : {};
       settings.dataset.sortsKeys = sortsUrl ? utility.keysFromObject(settings.dataset.sorts) : [];
     };
+
     this.add = function(attr, direction) {
       var sortsKeys = settings.dataset.sortsKeys,
           index = $.inArray(attr, sortsKeys);
@@ -825,6 +854,7 @@
       if (index === -1) { sortsKeys.push(attr); }
       return dt;
     };
+
     this.remove = function(attr) {
       var sortsKeys = settings.dataset.sortsKeys,
           index = $.inArray(attr, sortsKeys);
@@ -832,10 +862,12 @@
       if (index !== -1) { sortsKeys.splice(index, 1); }
       return dt;
     };
+
     this.clear = function() {
       settings.dataset.sorts = {};
       settings.dataset.sortsKeys.length = 0;
     };
+
     // Try to intelligently guess which sort function to use
     // based on the type of attribute values.
     // Consider using something more robust than `typeof` (http://javascriptweblog.wordpress.com/2011/08/08/fixing-the-javascript-typeof-operator/)
@@ -850,6 +882,7 @@
           type = types[attrType] || 'number';
       return type;
     };
+
     // Built-in sort functions
     // (the most common use-cases I could think of)
     this.functions = {
@@ -879,9 +912,11 @@
     this.initOnLoad = function() {
       return settings.features.sort;
     };
+
     this.init = function() {
       this.attach();
     };
+
     this.create = function(cell) {
       var $cell = $(cell),
           $link = $('<a></a>', {
@@ -909,32 +944,39 @@
 
       return $link;
     };
+
     this.attach = function() {
       obj.$element.find(settings.table.headRowSelector).children('th,td').each(function(){
         _this.attachOne(this);
       });
     };
+
     this.attachOne = function(cell) {
       var $cell = $(cell);
       if (!$cell.data('dynatable-no-sort')) {
         $cell.html(this.create(cell));
       }
     };
+
     this.appendArrowUp = function($link) {
       this.removeArrow($link);
       $link.append("<span class='dynatable-arrow'> &#9650;</span>");
     };
+
     this.appendArrowDown = function($link) {
       this.removeArrow($link);
       $link.append("<span class='dynatable-arrow'> &#9660;</span>");
     };
+
     this.removeArrow = function($link) {
       // Not sure why `parent()` is needed, the arrow should be inside the link from `append()` above
       $link.find('.dynatable-arrow').remove();
     };
+
     this.removeAllArrows = function() {
       obj.$element.find('.dynatable-arrow').remove();
     };
+
     this.toggleSort = function(e, $link, column) {
       var sortedByColumn = this.sortedByColumn($link, column),
           value = this.sortedByColumnValue(column);
@@ -967,9 +1009,11 @@
         this.appendArrowUp($link);
       }
     };
+
     this.sortedByColumn = function($link, column) {
       return utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; });
     };
+
     this.sortedByColumnValue = function(column) {
       return settings.dataset.sorts[column.sorts[0]];
     };
@@ -977,10 +1021,11 @@
 
   function Queries(obj, settings) {
     var _this = this;
-  // For ajax, to add a query, just do
+
     this.initOnLoad = function() {
       return settings.inputs.queries || settings.features.search;
     };
+
     this.init = function() {
       var queriesUrl = window.location.search.match(new RegExp(settings.params.queries + '[^&=]*=[^&]*', 'g'));
 
@@ -991,6 +1036,7 @@
         this.setupInputs();
       }
     };
+
     this.add = function(name, value) {
       // reset to first page since query will change records
       if (settings.features.paginate) {
@@ -999,10 +1045,12 @@
       settings.dataset.queries[name] = value;
       return dt;
     };
+
     this.remove = function(name) {
       delete settings.dataset.queries[name];
       return dt;
     };
+
     this.run = function() {
       for (query in settings.dataset.queries) {
         if (settings.dataset.queries.hasOwnProperty(query)) {
@@ -1027,6 +1075,7 @@
       }
       settings.dataset.queryRecordCount = obj.records.count();
     };
+
     // Shortcut for performing simple query from built-in search
     this.runSearch = function(q) {
       var origQueries = $.extend({}, settings.dataset.queries);
@@ -1039,6 +1088,7 @@
         obj.process();
       }
     };
+
     this.setupInputs = function() {
       settings.inputs.queries.each(function() {
         var $this = $(this),
@@ -1069,6 +1119,7 @@
         if (settings.dataset.queries[query]) { $this.val(decodeURIComponent(settings.dataset.queries[query])); }
       });
     };
+
     // Query functions for in-page querying
     // each function should take a record and a value as input
     // and output true of false as to whether the record is a match or not
@@ -1099,9 +1150,11 @@
     this.initOnLoad = function() {
       return settings.features.search;
     };
+
     this.init = function() {
       this.attach();
     };
+
     this.create = function() {
       var $search = $('<input />', {
             type: 'search',
@@ -1126,21 +1179,24 @@
         });
       return $searchSpan;
     };
+
     this.attach = function() {
       var $target = settings.inputs.searchTarget ? $(settings.inputs.searchTarget) : obj.$element;
       $target[settings.inputs.searchPlacement](this.create());
     };
   };
 
-  function PaginationPage(obj, settings) {
   // provide a public function for selecting page
+  function PaginationPage(obj, settings) {
     this.initOnLoad = function() {
       return settings.features.paginate;
     };
+
     this.init = function() {
       var pageUrl = window.location.search.match(new RegExp(settings.params.page + '=([^&]*)'));
       this.set(pageUrl ? pageUrl[1] : 1);
     };
+
     this.set = function(page) {
       settings.dataset.page = parseInt(page, 10);
     }
@@ -1152,6 +1208,7 @@
     this.initOnLoad = function() {
       return settings.features.paginate;
     };
+
     this.init = function() {
       var perPageUrl = window.location.search.match(new RegExp(settings.params.perPage + '=([^&]*)'));
 
@@ -1165,6 +1222,7 @@
         this.attach();
       }
     };
+
     this.create = function() {
       var $select = $('<select>', {
             id: 'dynatable-per-page-' + obj.element.id,
@@ -1186,26 +1244,30 @@
         'class': 'dynatable-per-page'
       }).append("<span class='dynatable-per-page-label'>" + settings.inputs.perPageText + "</span>").append($select);
     };
+
     this.attach = function() {
       var $target = settings.inputs.perPageTarget ? $(settings.inputs.perPageTarget) : obj.$element;
       $target[settings.inputs.perPagePlacement](this.create());
     };
+
     this.set = function(number) {
       obj.paginationPage.set(1);
       settings.dataset.perPage = parseInt(number);
     };
   };
 
+  // pagination links which update dataset.page attribute
   function PaginationLinks(obj, settings) {
     var _this = this;
 
-  // pagination links which update dataset.page attribute
     this.initOnLoad = function() {
       return settings.features.paginate;
     };
+
     this.init = function() {
       this.attach();
     };
+
     this.create = function() {
       var $pageLinks = $('<ul></ul>', {
             id: 'dynatable-pagination-links-' + obj.element.id,
@@ -1289,6 +1351,7 @@
 
       return $pageLinks;
     };
+
     this.attach = function() {
       // append page liks *after* delegate-event-binding so it doesn't need to
       // find and select all page links to bind event
