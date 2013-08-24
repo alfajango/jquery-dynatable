@@ -187,7 +187,7 @@
   };
 
   initModel = function(model) {
-    var modelInstance = this[model] = (new models[model]).setInstance(this);
+    var modelInstance = this[model] = new models[model](this, this.settings);
     if (modelInstance.initOnLoad()) {
       modelInstance.init();
     }
@@ -298,7 +298,7 @@
   };
 
   function defaultAttributeFilter(record) {
-    // `this` is the column object in this.obj.settings.columns
+    // `this` is the column object in settings.columns
     // TODO: automatically convert common types, such as arrays and objects, to string
     return record[this.id];
   };
@@ -313,20 +313,6 @@
   //-----------------------------------------------------------------
 
   Model = {
-    extend: function(props) {
-      for (prop in props) {
-        if (props.hasOwnProperty(prop)) {
-          this[prop] = props[prop];
-        }
-      }
-      return this;
-    },
-
-    setInstance: function(instance) {
-      this.obj = instance;
-      return this;
-    },
-
     initOnLoad: function() {
       return true;
     },
@@ -346,50 +332,51 @@
   // Dynatable object models
   //-----------------------------------------------------------------
 
-  function Dom() {
+  function Dom(obj, settings) {
+    var _this = this;
+
     // update table contents with new records array
     // from query (whether ajax or not)
     this.update = function() {
-      var _this = this,
-          $rows = $(),
-          columns = this.obj.settings.table.columns,
-          rowFilter = this.obj.settings.filters._rowFilter,
-          cellFilter = this.obj.settings.filters._cellFilter;
+      var $rows = $(),
+          columns = settings.table.columns,
+          rowFilter = settings.filters._rowFilter,
+          cellFilter = settings.filters._cellFilter;
 
-      this.obj.$element.trigger('dynatable:beforeUpdate', $rows);
+      obj.$element.trigger('dynatable:beforeUpdate', $rows);
 
       // loop through records
-      for (var i = 0, len = this.obj.settings.dataset.records.length; i < len; i++) {
-        var record = this.obj.settings.dataset.records[i],
+      for (var i = 0, len = settings.dataset.records.length; i < len; i++) {
+        var record = settings.dataset.records[i],
             $tr = rowFilter(i, record, columns, cellFilter);
         $rows = $rows.add($tr);
       }
 
       // Appended dynatable interactive elements
-      if (this.obj.settings.features.recordCount) {
-        $('#dynatable-record-count-' + this.obj.element.id).replaceWith(this.obj.recordsCount.create());
+      if (settings.features.recordCount) {
+        $('#dynatable-record-count-' + obj.element.id).replaceWith(obj.recordsCount.create());
       }
-      if (this.obj.settings.features.paginate) {
-        $('#dynatable-pagination-links-' + this.obj.element.id).replaceWith(this.obj.paginationLinks.create());
-        if (this.obj.settings.features.perPageSelect) {
-          $('#dynatable-per-page-' + this.obj.element.id).val(parseInt(this.obj.settings.dataset.perPage));
+      if (settings.features.paginate) {
+        $('#dynatable-pagination-links-' + obj.element.id).replaceWith(obj.paginationLinks.create());
+        if (settings.features.perPageSelect) {
+          $('#dynatable-per-page-' + obj.element.id).val(parseInt(settings.dataset.perPage));
         }
       }
 
       // Sort headers functionality
-      if (this.obj.settings.features.sort && columns) {
-        this.obj.sortsHeaders.removeAllArrows();
+      if (settings.features.sort && columns) {
+        obj.sortsHeaders.removeAllArrows();
         for (var i = 0, len = columns.length; i < len; i++) {
           var column = columns[i],
-              sortedByColumn = utility.allMatch(_this.obj.settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; }),
-              value = _this.obj.settings.dataset.sorts[column.sorts[0]];
+              sortedByColumn = utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; }),
+              value = settings.dataset.sorts[column.sorts[0]];
 
           if (sortedByColumn) {
-            _this.obj.$element.find('[data-dynatable-column="' + column.id + '"]').find('.dynatable-sort-header').each(function(){
+            obj.$element.find('[data-dynatable-column="' + column.id + '"]').find('.dynatable-sort-header').each(function(){
               if (value == 1) {
-                _this.obj.sortsHeaders.appendArrowUp($(this));
+                obj.sortsHeaders.appendArrowUp($(this));
               } else {
-                _this.obj.sortsHeaders.appendArrowDown($(this));
+                obj.sortsHeaders.appendArrowDown($(this));
               }
             });
           }
@@ -397,44 +384,45 @@
       }
 
       // Query search functionality
-      if (this.obj.settings.inputs.queries) {
-        this.obj.settings.inputs.queries.each(function() {
+      if (settings.inputs.queries) {
+        settings.inputs.queries.each(function() {
           var $this = $(this),
-              q = _this.obj.settings.dataset.queries[$this.data('dynatable-query')];
+              q = settings.dataset.queries[$this.data('dynatable-query')];
           $(this).val(q || '');
         });
       }
-      this.obj.$element.find(this.obj.settings.table.bodyRowSelector).remove();
-      this.obj.$element.append($rows);
+      obj.$element.find(settings.table.bodyRowSelector).remove();
+      obj.$element.append($rows);
 
-      this.obj.$element.trigger('dynatable:afterUpdate', $rows);
+      obj.$element.trigger('dynatable:afterUpdate', $rows);
     };
   };
 
-  function DomColumns() {
+  function DomColumns(obj, settings) {
+    var _this = this;
+
     this.initOnLoad = function() {
-      return this.obj.$element.is('table');
+      return obj.$element.is('table');
     };
     this.init = function() {
-      this.obj.settings.table.columns = [];
+      settings.table.columns = [];
       this.getFromTable();
     };
     // initialize table[columns] array
     this.getFromTable = function() {
-      var _this = this,
-          $columns = this.obj.$element.find(this.obj.settings.table.headRowSelector).children('th,td');
+      var $columns = obj.$element.find(settings.table.headRowSelector).children('th,td');
       if ($columns.length) {
         $columns.each(function(index){
           _this.add($(this), index, true);
         });
       } else {
-        return $.error("Couldn't find any columns headers in '" + this.obj.settings.table.headRowSelector + " th,td'. If your header row is different, specify the selector in the table: headRowSelector option.");
+        return $.error("Couldn't find any columns headers in '" + settings.table.headRowSelector + " th,td'. If your header row is different, specify the selector in the table: headRowSelector option.");
       }
     };
     this.add = function($column, position, skipAppend, skipUpdate) {
-      var columns = this.obj.settings.table.columns,
+      var columns = settings.table.columns,
           label = $column.text(),
-          id = $column.data('dynatable-column') || utility.normalizeText(label, this.obj.settings.table.defaultColumnIdStyle),
+          id = $column.data('dynatable-column') || utility.normalizeText(label, settings.table.defaultColumnIdStyle),
           dataSorts = $column.data('dynatable-sorts'),
           sorts = dataSorts ? $.map(dataSorts.split(','), function(text) { return $.trim(text); }) : [id];
 
@@ -448,8 +436,8 @@
         index: position,
         label: label,
         id: id,
-        dataFilter: this.obj.settings.filters[id] || this.obj.settings.filters._attributeFilter,
-        dataUnfilter: this.obj.settings.unfilters[id] || this.obj.settings.unfilters._attributeUnfilter,
+        dataFilter: settings.filters[id] || settings.filters._attributeFilter,
+        dataUnfilter: settings.unfilters[id] || settings.unfilters._attributeUnfilter,
         sorts: sorts,
         hidden: $column.css('display') === 'none',
         textAlign: $column.css('text-align')
@@ -459,12 +447,12 @@
       $column
         .attr('data-dynatable-column', id)
         .addClass('dynatable-head');
-      if (this.obj.settings.table.headRowClass) { $column.addClass(this.obj.settings.table.headRowClass); }
+      if (settings.table.headRowClass) { $column.addClass(settings.table.headRowClass); }
 
       // Append column header to table
       if (!skipAppend) {
         var domPosition = position + 1,
-            $sibling = this.obj.$element.find(this.obj.settings.table.headRowSelector)
+            $sibling = obj.$element.find(settings.table.headRowSelector)
               .children('th:nth-child(' + domPosition + '),td:nth-child(' + domPosition + ')').first(),
             columnsAfter = columns.slice(position + 1, columns.length);
 
@@ -472,10 +460,10 @@
           $sibling.before($column);
         // sibling column doesn't yet exist (maybe this is the last column in the header row)
         } else {
-          this.obj.$element.find(this.obj.settings.table.headRowSelector).append($column);
+          obj.$element.find(settings.table.headRowSelector).append($column);
         }
 
-        this.obj.sortsHeaders.attachOne($column.get());
+        obj.sortsHeaders.attachOne($column.get());
 
         // increment the index of all columns after this one that was just inserted
         if (columnsAfter.length) {
@@ -485,14 +473,14 @@
         }
 
         if (!skipUpdate) {
-          this.obj.dom.update();
+          obj.dom.update();
         }
       }
 
       return dt;
     };
     this.remove = function(columnIndexOrId) {
-      var columns = this.obj.settings.table.columns,
+      var columns = settings.table.columns,
           length = columns.length;
 
       if (typeof(columnIndexOrId) === "number") {
@@ -512,14 +500,14 @@
         }
       }
 
-      this.obj.dom.update();
+      obj.dom.update();
     };
     this.removeFromTable = function(columnId) {
-      this.obj.$element.find(this.obj.settings.table.headRowSelector).children('[data-dynatable-column="' + columnId + '"]').first()
+      obj.$element.find(settings.table.headRowSelector).children('[data-dynatable-column="' + columnId + '"]').first()
         .remove();
     };
     this.removeFromArray = function(index) {
-      var columns = this.obj.settings.table.columns,
+      var columns = settings.table.columns,
           adjustColumns;
       columns.splice(index, 1);
       adjustColumns = columns.slice(index, columns.length);
@@ -534,7 +522,7 @@
     this.attachGeneratedAttributes = function($cell) {
       // Use increment to create unique column name that is the same each time the page is reloaded,
       // in order to avoid errors with mismatched attribute names when loading cached `dataset.records` array
-      var increment = this.obj.$element.find(this.obj.settings.table.headRowSelector).children('th[data-dynatable-generated]').length;
+      var increment = obj.$element.find(settings.table.headRowSelector).children('th[data-dynatable-generated]').length;
       return $cell
         .attr('data-dynatable-column', 'dynatable-generated-' + increment) //+ utility.randomHash(),
         .attr('data-dynatable-no-sort', 'true')
@@ -542,68 +530,69 @@
     };
   };
 
-  function Records() {
+  function Records(obj, settings) {
+    var _this = this;
+
     this.initOnLoad = function() {
-      return !this.obj.settings.dataset.ajax;
+      return !settings.dataset.ajax;
     };
     this.init = function() {
-      if (this.obj.settings.dataset.records === null) {
-        this.obj.settings.dataset.records = this.getFromTable();
+      if (settings.dataset.records === null) {
+        settings.dataset.records = this.getFromTable();
 
-        if (!this.obj.settings.dataset.queryRecordCount) {
-          this.obj.settings.dataset.queryRecordCount = this.count();
+        if (!settings.dataset.queryRecordCount) {
+          settings.dataset.queryRecordCount = this.count();
         }
 
-        if (!this.obj.settings.dataset.totalRecordCount){
-          this.obj.settings.dataset.totalRecordCount = this.obj.settings.dataset.queryRecordCount;
+        if (!settings.dataset.totalRecordCount){
+          settings.dataset.totalRecordCount = settings.dataset.queryRecordCount;
         }
       }
 
       // Create cache of original full recordset (unpaginated and unqueried)
-      this.obj.settings.dataset.originalRecords = $.extend(true, [], this.obj.settings.dataset.records);
+      settings.dataset.originalRecords = $.extend(true, [], settings.dataset.records);
     };
     // merge ajax response json with cached data including
     // meta-data and records
     this.updateFromJson = function(data) {
       var records;
-      if (this.obj.settings.params.records === "_root") {
+      if (settings.params.records === "_root") {
         records = data;
-      } else if (this.obj.settings.params.records in data) {
-        records = data[this.obj.settings.params.records];
+      } else if (settings.params.records in data) {
+        records = data[settings.params.records];
       }
-      if (this.obj.settings.params.record) {
+      if (settings.params.record) {
         var len = records.length - 1;
         for (var i = 0; i < len; i++) {
-          records[i] = records[i][this.obj.settings.params.record];
+          records[i] = records[i][settings.params.record];
         }
       }
-      if (this.obj.settings.params.queryRecordCount in data) {
-        this.obj.settings.dataset.queryRecordCount = data[this.obj.settings.params.queryRecordCount];
+      if (settings.params.queryRecordCount in data) {
+        settings.dataset.queryRecordCount = data[settings.params.queryRecordCount];
       }
-      if (this.obj.settings.params.totalRecordCount in data) {
-        this.obj.settings.dataset.totalRecordCount = data[this.obj.settings.params.totalRecordCount];
+      if (settings.params.totalRecordCount in data) {
+        settings.dataset.totalRecordCount = data[settings.params.totalRecordCount];
       }
-      this.obj.settings.dataset.records = records;
+      settings.dataset.records = records;
     };
     // For really advanced sorting,
     // see http://james.padolsey.com/javascript/sorting-elements-with-jquery/
     this.sort = function() {
-      var _this = this,
-          sort = [].sort,
-          sorts = this.obj.settings.dataset.sorts,
-          sortsKeys = this.obj.settings.dataset.sortsKeys,
-          sortTypes = this.obj.settings.dataset.sortTypes;
+      var sort = [].sort,
+          sorts = settings.dataset.sorts,
+          sortsKeys = settings.dataset.sortsKeys,
+          sortTypes = settings.dataset.sortTypes;
 
       var sortFunction = function(a, b) {
         var comparison;
         if ($.isEmptyObject(sorts)) {
-          comparison = _this.obj.sorts.functions['originalPlacement'](a, b);
+          comparison = obj.sorts.functions['originalPlacement'](a, b);
         } else {
           for (var i = 0, len = sortsKeys.length; i < len; i++) {
             var attr = sortsKeys[i],
                 direction = sorts[attr],
-                sortType = sortTypes[attr] || _this.obj.sorts.guessType(a, b, attr);
-            comparison = _this.obj.sorts.functions[sortType](a, b, attr, direction);
+                sortType = sortTypes[attr] || obj.sorts.guessType(a, b, attr);
+            comparison = obj.sorts.functions[sortType](a, b, attr, direction);
             // Don't need to sort any further unless this sort is a tie between a and b,
             // so break the for loop unless tied
             if (comparison !== 0) { break; }
@@ -612,30 +601,29 @@
         return comparison;
       }
 
-      return sort.call(this.obj.settings.dataset.records, sortFunction);
+      return sort.call(settings.dataset.records, sortFunction);
     };
     this.paginate = function() {
       var bounds = this.pageBounds(),
           first = bounds[0], last = bounds[1];
-      this.obj.settings.dataset.records = this.obj.settings.dataset.records.slice(first, last);
+      settings.dataset.records = settings.dataset.records.slice(first, last);
     };
     this.resetOriginal = function() {
-      this.obj.settings.dataset.records = this.obj.settings.dataset.originalRecords || [];
+      settings.dataset.records = settings.dataset.originalRecords || [];
     };
     this.pageBounds = function() {
-      var page = this.obj.settings.dataset.page || 1,
-          first = (page - 1) * this.obj.settings.dataset.perPage,
-          last = Math.min(first + this.obj.settings.dataset.perPage, this.obj.settings.dataset.queryRecordCount);
+      var page = settings.dataset.page || 1,
+          first = (page - 1) * settings.dataset.perPage,
+          last = Math.min(first + settings.dataset.perPage, settings.dataset.queryRecordCount);
       return [first,last];
     };
     // get initial recordset to populate table
     // if ajax, call ajaxUrl
     // otherwise, initialize from in-table records
     this.getFromTable = function() {
-      var _this = this,
-          records = [],
-          columns = this.obj.settings.table.columns,
-          tableRecords = this.obj.$element.find(this.obj.settings.table.bodyRowSelector);
+      var records = [],
+          columns = settings.table.columns,
+          tableRecords = obj.$element.find(settings.table.bodyRowSelector);
 
       tableRecords.each(function(index){
         var record = {};
@@ -645,7 +633,7 @@
             // Header cell didn't exist for this column, so let's generate and append
             // a new header cell with a randomly generated name (so we can store and
             // retrieve the contents of this column for each record)
-            _this.obj.domColumns.add(_this.obj.domColumns.generate(), columns.length, false, true); // don't skipAppend, do skipUpdate
+            obj.domColumns.add(obj.domColumns.generate(), columns.length, false, true); // don't skipAppend, do skipUpdate
           }
           var value = columns[index].dataUnfilter(this, record),
               attr = columns[index].id;
@@ -664,8 +652,8 @@
         });
         // Allow configuration function which alters record based on attributes of
         // table row (e.g. from html5 data- attributes)
-        if (typeof(_this.obj.settings.unfilters._rowUnfilter) === "function") {
-          _this.obj.settings.unfilters._rowUnfilter(index, this, record);
+        if (typeof(settings.unfilters._rowUnfilter) === "function") {
+          settings.unfilters._rowUnfilter(index, this, record);
         }
         records.push(record);
       });
@@ -673,28 +661,28 @@
     };
     // count records from table
     this.count = function() {
-      return this.obj.settings.dataset.records.length;
+      return settings.dataset.records.length;
     };
   };
 
-  function RecordsCount() {
+  function RecordsCount(obj, settings) {
     this.initOnLoad = function() {
-      return this.obj.settings.features.recordCount;
+      return settings.features.recordCount;
     };
     this.init = function() {
       this.attach();
     };
     this.create = function() {
-      var recordsShown = this.obj.records.count(),
-          recordsQueryCount = this.obj.settings.dataset.queryRecordCount,
-          recordsTotal = this.obj.settings.dataset.totalRecordCount,
-          text = this.obj.settings.inputs.recordCountText,
-          collection_name = this.obj.settings.params.records;
+      var recordsShown = obj.records.count(),
+          recordsQueryCount = settings.dataset.queryRecordCount,
+          recordsTotal = settings.dataset.totalRecordCount,
+          text = settings.inputs.recordCountText,
+          collection_name = settings.params.records;
 
-      if (recordsShown < recordsQueryCount && this.obj.settings.features.paginate) {
-        var bounds = this.obj.records.pageBounds();
+      if (recordsShown < recordsQueryCount && settings.features.paginate) {
+        var bounds = obj.records.pageBounds();
         text += "<span class='dynatable-record-bounds'>" + (bounds[0] + 1) + " to " + bounds[1] + "</span> of ";
-      } else if (recordsShown === recordsQueryCount && this.obj.settings.features.paginate) {
+      } else if (recordsShown === recordsQueryCount && settings.features.paginate) {
         text += recordsShown + " of ";
       }
       text += recordsQueryCount + " " + collection_name;
@@ -703,25 +691,25 @@
       }
 
       return $('<span></span>', {
-                id: 'dynatable-record-count-' + this.obj.element.id,
+                id: 'dynatable-record-count-' + obj.element.id,
                 'class': 'dynatable-record-count',
                 html: text
               });
     };
     this.attach = function() {
-      var $target = this.obj.settings.inputs.recordCountTarget ? $(this.obj.settings.inputs.recordCountTarget) : this.obj.$element;
-      $target[this.obj.settings.inputs.recordCountPlacement](this.create());
+      var $target = settings.inputs.recordCountTarget ? $(settings.inputs.recordCountTarget) : obj.$element;
+      $target[settings.inputs.recordCountPlacement](this.create());
     };
   };
 
-  function ProcessingIndicator() {
+  function ProcessingIndicator(obj, settings) {
     this.init = function() {
       this.attach();
     };
     this.create = function() {
       var $processing = $('<div></div>', {
-            html: '<span>' + this.obj.settings.inputs.processingText + '</span>',
-            id: 'dynatable-processing-' + this.obj.element.id,
+            html: '<span>' + settings.inputs.processingText + '</span>',
+            id: 'dynatable-processing-' + obj.element.id,
             'class': 'dynatable-processing',
             style: 'position: absolute; display: none;'
           });
@@ -729,11 +717,11 @@
       return $processing;
     };
     this.position = function() {
-      var $processing = $('#dynatable-processing-' + this.obj.element.id),
+      var $processing = $('#dynatable-processing-' + obj.element.id),
           $span = $processing.children('span'),
           spanHeight = $span.outerHeight(),
           spanWidth = $span.outerWidth(),
-          $covered = this.obj.$element,
+          $covered = obj.$element,
           offset = $covered.offset(),
           height = $covered.outerHeight(), width = $covered.outerWidth();
 
@@ -747,21 +735,21 @@
       return $processing;
     };
     this.attach = function() {
-      this.obj.$element.before(this.create());
+      obj.$element.before(this.create());
     };
     this.show = function() {
-      $('#dynatable-processing-' + this.obj.element.id).show();
+      $('#dynatable-processing-' + obj.element.id).show();
       this.position();
     };
     this.hide = function() {
-      $('#dynatable-processing-' + this.obj.element.id).hide();
+      $('#dynatable-processing-' + obj.element.id).hide();
     };
   };
 
-  function State() {
+  function State(obj, settings) {
     this.initOnLoad = function() {
       // Check if pushState option is true, and if browser supports it
-      return this.obj.settings.features.pushState && history.pushState;
+      return settings.features.pushState && history.pushState;
     };
     this.init = function() {
       window.onpopstate = function(event) {
@@ -780,10 +768,10 @@
       if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
       $.extend(urlOptions, data);
 
-      params = utility.refreshQueryString(urlString, data, this.obj.settings);
-      this.obj.$element.trigger('dynatable:push', data);
+      params = utility.refreshQueryString(urlString, data, settings);
+      obj.$element.trigger('dynatable:push', data);
 
-      cache = { dynatable: { dataset: this.obj.settings.dataset } };
+      cache = { dynatable: { dataset: settings.dataset } };
       cacheStr = JSON.stringify(cache);
 
       // Mozilla has a 640k char limit on what can be stored in pushState.
@@ -810,43 +798,43 @@
     };
     this.pop = function(event) {
       var data = event.state.dynatable;
-      this.obj.settings.dataset = data.dataset;
+      settings.dataset = data.dataset;
 
       // If dataset.records is cached from pushState
       if ( data.dataset.records ) {
-        this.obj.dom.update();
+        obj.dom.update();
       } else {
-        this.obj.process(true);
+        obj.process(true);
       }
     };
   };
 
-  function Sorts() {
+  function Sorts(obj, settings) {
     this.initOnLoad = function() {
-      return this.obj.settings.features.sort;
+      return settings.features.sort;
     };
     this.init = function() {
-      var sortsUrl = window.location.search.match(new RegExp(this.obj.settings.params.sorts + '[^&=]*=[^&]*', 'g'));
-      this.obj.settings.dataset.sorts = sortsUrl ? utility.deserialize(sortsUrl)[this.obj.settings.params.sorts] : {};
-      this.obj.settings.dataset.sortsKeys = sortsUrl ? utility.keysFromObject(this.obj.settings.dataset.sorts) : [];
+      var sortsUrl = window.location.search.match(new RegExp(settings.params.sorts + '[^&=]*=[^&]*', 'g'));
+      settings.dataset.sorts = sortsUrl ? utility.deserialize(sortsUrl)[settings.params.sorts] : {};
+      settings.dataset.sortsKeys = sortsUrl ? utility.keysFromObject(settings.dataset.sorts) : [];
     };
     this.add = function(attr, direction) {
-      var sortsKeys = this.obj.settings.dataset.sortsKeys,
+      var sortsKeys = settings.dataset.sortsKeys,
           index = $.inArray(attr, sortsKeys);
-      this.obj.settings.dataset.sorts[attr] = direction;
+      settings.dataset.sorts[attr] = direction;
       if (index === -1) { sortsKeys.push(attr); }
       return dt;
     };
     this.remove = function(attr) {
-      var sortsKeys = this.obj.settings.dataset.sortsKeys,
+      var sortsKeys = settings.dataset.sortsKeys,
           index = $.inArray(attr, sortsKeys);
-      delete this.obj.settings.dataset.sorts[attr];
+      delete settings.dataset.sorts[attr];
       if (index !== -1) { sortsKeys.splice(index, 1); }
       return dt;
     };
     this.clear = function() {
-      this.obj.settings.dataset.sorts = {};
-      this.obj.settings.dataset.sortsKeys.length = 0;
+      settings.dataset.sorts = {};
+      settings.dataset.sortsKeys.length = 0;
     };
     // Try to intelligently guess which sort function to use
     // based on the type of attribute values.
@@ -885,27 +873,28 @@
   };
 
   // turn table headers into links which add sort to sorts array
-  function SortsHeaders() {
+  function SortsHeaders(obj, settings) {
+    var _this = this;
+
     this.initOnLoad = function() {
-      return this.obj.settings.features.sort;
+      return settings.features.sort;
     };
     this.init = function() {
       this.attach();
     };
     this.create = function(cell) {
-      var _this = this,
-          $cell = $(cell),
+      var $cell = $(cell),
           $link = $('<a></a>', {
             'class': 'dynatable-sort-header',
             href: '#',
             html: $cell.html()
           }),
           id = $cell.data('dynatable-column'),
-          column = utility.findObjectInArray(this.obj.settings.table.columns, {id: id});
+          column = utility.findObjectInArray(settings.table.columns, {id: id});
 
       $link.bind('click', function(e) {
         _this.toggleSort(e, $link, column);
-        _this.obj.process();
+        obj.process();
 
         e.preventDefault();
       });
@@ -921,8 +910,7 @@
       return $link;
     };
     this.attach = function() {
-      var _this = this;
-      this.obj.$element.find(this.obj.settings.table.headRowSelector).children('th,td').each(function(){
+      obj.$element.find(settings.table.headRowSelector).children('th,td').each(function(){
         _this.attachOne(this);
       });
     };
@@ -945,16 +933,15 @@
       $link.find('.dynatable-arrow').remove();
     };
     this.removeAllArrows = function() {
-      this.obj.$element.find('.dynatable-arrow').remove();
+      obj.$element.find('.dynatable-arrow').remove();
     };
     this.toggleSort = function(e, $link, column) {
-      var _this = this,
-          sortedByColumn = this.sortedByColumn($link, column),
+      var sortedByColumn = this.sortedByColumn($link, column),
           value = this.sortedByColumnValue(column);
       // Clear existing sorts unless this is a multisort event
-      if (!this.obj.settings.inputs.multisort || !utility.anyMatch(e, this.obj.settings.inputs.multisort, function(evt, key) { return e[key]; })) {
+      if (!settings.inputs.multisort || !utility.anyMatch(e, settings.inputs.multisort, function(evt, key) { return e[key]; })) {
         this.removeAllArrows();
-        this.obj.sorts.clear();
+        obj.sorts.clear();
       }
 
       // If sorts for this column are already set
@@ -962,67 +949,67 @@
         // If ascending, then make descending
         if (value == 1) {
           for (var i = 0, len = column.sorts.length; i < len; i++) {
-            _this.obj.sorts.add(column.sorts[i], -1);
+            obj.sorts.add(column.sorts[i], -1);
           }
           this.appendArrowDown($link);
         // If descending, remove sort
         } else {
           for (var i = 0, len = column.sorts.length; i < len; i++) {
-            _this.obj.sorts.remove(column.sorts[i]);
+            obj.sorts.remove(column.sorts[i]);
           }
           this.removeArrow($link);
         }
       // Otherwise, if not already set, set to ascending
       } else {
         for (var i = 0, len = column.sorts.length; i < len; i++) {
-          _this.obj.sorts.add(column.sorts[i], 1);
+          obj.sorts.add(column.sorts[i], 1);
         }
         this.appendArrowUp($link);
       }
     };
     this.sortedByColumn = function($link, column) {
-      return utility.allMatch(this.obj.settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; });
+      return utility.allMatch(settings.dataset.sorts, column.sorts, function(sorts, sort) { return sort in sorts; });
     };
     this.sortedByColumnValue = function(column) {
-      return this.obj.settings.dataset.sorts[column.sorts[0]];
+      return settings.dataset.sorts[column.sorts[0]];
     };
   };
 
-  function Queries() {
+  function Queries(obj, settings) {
+    var _this = this;
   // For ajax, to add a query, just do
     this.initOnLoad = function() {
-      return this.obj.settings.inputs.queries || this.obj.settings.features.search;
+      return settings.inputs.queries || settings.features.search;
     };
     this.init = function() {
-      var queriesUrl = window.location.search.match(new RegExp(this.obj.settings.params.queries + '[^&=]*=[^&]*', 'g'));
+      var queriesUrl = window.location.search.match(new RegExp(settings.params.queries + '[^&=]*=[^&]*', 'g'));
 
-      this.obj.settings.dataset.queries = queriesUrl ? utility.deserialize(queriesUrl)[this.obj.settings.params.queries] : {};
-      if (this.obj.settings.dataset.queries === "") { this.obj.settings.dataset.queries = {}; }
+      settings.dataset.queries = queriesUrl ? utility.deserialize(queriesUrl)[settings.params.queries] : {};
+      if (settings.dataset.queries === "") { settings.dataset.queries = {}; }
 
-      if (this.obj.settings.inputs.queries) {
+      if (settings.inputs.queries) {
         this.setupInputs();
       }
     };
     this.add = function(name, value) {
       // reset to first page since query will change records
-      if (this.obj.settings.features.paginate) {
-        this.obj.settings.dataset.page = 1;
+      if (settings.features.paginate) {
+        settings.dataset.page = 1;
       }
-      this.obj.settings.dataset.queries[name] = value;
+      settings.dataset.queries[name] = value;
       return dt;
     };
     this.remove = function(name) {
-      delete this.obj.settings.dataset.queries[name];
+      delete settings.dataset.queries[name];
       return dt;
     };
     this.run = function() {
-      var _this = this;
-      for (query in this.obj.settings.dataset.queries) {
-        if (_this.obj.settings.dataset.queries.hasOwnProperty(query)) {
-          var value = _this.obj.settings.dataset.queries[query];
+      for (query in settings.dataset.queries) {
+        if (settings.dataset.queries.hasOwnProperty(query)) {
+          var value = settings.dataset.queries[query];
           if (_this.functions[query] === undefined) {
             // Try to lazily evaluate query from column names if not explictly defined
-            var queryColumn = utility.findObjectInArray(_this.obj.settings.table.columns, {id: query});
+            var queryColumn = utility.findObjectInArray(settings.table.columns, {id: query});
             if (queryColumn) {
               _this.functions[query] = function(record, queryValue) {
                 return record[query] == queryValue;
@@ -1033,41 +1020,40 @@
             }
           }
           // collect all records that return true for query
-          _this.obj.settings.dataset.records = $.map(_this.obj.settings.dataset.records, function(record) {
+          settings.dataset.records = $.map(settings.dataset.records, function(record) {
             return _this.functions[query](record, value) ? record : null;
           });
         }
       }
-      this.obj.settings.dataset.queryRecordCount = this.obj.records.count();
+      settings.dataset.queryRecordCount = obj.records.count();
     };
     // Shortcut for performing simple query from built-in search
     this.runSearch = function(q) {
-      var origQueries = $.extend({}, this.obj.settings.dataset.queries);
+      var origQueries = $.extend({}, settings.dataset.queries);
       if (q) {
         this.add('search', q);
       } else {
         this.remove('search');
       }
-      if (!utility.objectsEqual(this.obj.settings.dataset.queries, origQueries)) {
-        this.obj.process();
+      if (!utility.objectsEqual(settings.dataset.queries, origQueries)) {
+        obj.process();
       }
     };
     this.setupInputs = function() {
-      var _this = this;
-      this.obj.settings.inputs.queries.each(function() {
+      settings.inputs.queries.each(function() {
         var $this = $(this),
-            event = $this.data('dynatable-query-event') || _this.obj.settings.inputs.queryEvent,
+            event = $this.data('dynatable-query-event') || settings.inputs.queryEvent,
             query = $this.data('dynatable-query') || $this.attr('name') || this.id,
             queryFunction = function(e) {
               var q = $(this).val();
               if (q === "") { q = undefined; }
-              if (q === _this.obj.settings.dataset.queries[query]) { return false; }
+              if (q === settings.dataset.queries[query]) { return false; }
               if (q) {
                 _this.add(query, q);
               } else {
                 _this.remove(query);
               }
-              _this.obj.process();
+              obj.process();
               e.preventDefault();
             };
 
@@ -1080,7 +1066,7 @@
             }
           });
 
-        if (_this.obj.settings.dataset.queries[query]) { $this.val(decodeURIComponent(_this.obj.settings.dataset.queries[query])); }
+        if (settings.dataset.queries[query]) { $this.val(decodeURIComponent(settings.dataset.queries[query])); }
       });
     };
     // Query functions for in-page querying
@@ -1107,131 +1093,134 @@
     };
   };
 
-  function InputsSearch() {
+  function InputsSearch(obj, settings) {
+    var _this = this;
+
     this.initOnLoad = function() {
-      return this.obj.settings.features.search;
+      return settings.features.search;
     };
     this.init = function() {
       this.attach();
     };
     this.create = function() {
-      var _this = this,
-          $search = $('<input />', {
+      var $search = $('<input />', {
             type: 'search',
-            id: 'dynatable-query-search-' + this.obj.element.id,
-            value: this.obj.settings.dataset.queries.search
+            id: 'dynatable-query-search-' + obj.element.id,
+            value: settings.dataset.queries.search
           }),
           $searchSpan = $('<span></span>', {
-            id: 'dynatable-search-' + this.obj.element.id,
+            id: 'dynatable-search-' + obj.element.id,
             'class': 'dynatable-search',
             text: 'Search: '
           }).append($search);
 
       $search
-        .bind(this.obj.settings.inputs.queryEvent, function() {
-          _this.obj.queries.runSearch($(this).val());
+        .bind(settings.inputs.queryEvent, function() {
+          obj.queries.runSearch($(this).val());
         })
         .bind('keypress', function(e) {
           if (e.which == 13) {
-            _this.obj.queries.runSearch($(this).val());
+            obj.queries.runSearch($(this).val());
             e.preventDefault();
           }
         });
       return $searchSpan;
     };
     this.attach = function() {
-      var $target = this.obj.settings.inputs.searchTarget ? $(this.obj.settings.inputs.searchTarget) : this.obj.$element;
-      $target[this.obj.settings.inputs.searchPlacement](this.create());
+      var $target = settings.inputs.searchTarget ? $(settings.inputs.searchTarget) : obj.$element;
+      $target[settings.inputs.searchPlacement](this.create());
     };
   };
 
-  function PaginationPage() {
+  function PaginationPage(obj, settings) {
   // provide a public function for selecting page
     this.initOnLoad = function() {
-      return this.obj.settings.features.paginate;
+      return settings.features.paginate;
     };
     this.init = function() {
-      var pageUrl = window.location.search.match(new RegExp(this.obj.settings.params.page + '=([^&]*)'));
+      var pageUrl = window.location.search.match(new RegExp(settings.params.page + '=([^&]*)'));
       this.set(pageUrl ? pageUrl[1] : 1);
     };
     this.set = function(page) {
-      this.obj.settings.dataset.page = parseInt(page, 10);
+      settings.dataset.page = parseInt(page, 10);
     }
   };
 
-  function PaginationPerPage() {
+  function PaginationPerPage(obj, settings) {
+    var _this = this;
+
     this.initOnLoad = function() {
-      return this.obj.settings.features.paginate;
+      return settings.features.paginate;
     };
     this.init = function() {
-      var perPageUrl = window.location.search.match(new RegExp(this.obj.settings.params.perPage + '=([^&]*)'));
+      var perPageUrl = window.location.search.match(new RegExp(settings.params.perPage + '=([^&]*)'));
 
       if (perPageUrl) {
         this.set(perPageUrl[1]);
       } else {
-        this.set(this.obj.settings.dataset.perPageDefault);
+        this.set(settings.dataset.perPageDefault);
       }
 
-      if (this.obj.settings.features.perPageSelect) {
+      if (settings.features.perPageSelect) {
         this.attach();
       }
     };
     this.create = function() {
-      var _this = this,
-          $select = $('<select>', {
-            id: 'dynatable-per-page-' + this.obj.element.id,
+      var $select = $('<select>', {
+            id: 'dynatable-per-page-' + obj.element.id,
             'class': 'dynatable-per-page-select'
           });
 
-      for (var i = 0, len = this.obj.settings.dataset.perPageOptions.length; i < len; i++) {
-        var number = this.obj.settings.dataset.perPageOptions[i],
-            selected = _this.obj.settings.dataset.perPage == number ? 'selected="selected"' : '';
+      for (var i = 0, len = settings.dataset.perPageOptions.length; i < len; i++) {
+        var number = settings.dataset.perPageOptions[i],
+            selected = settings.dataset.perPage == number ? 'selected="selected"' : '';
         $select.append('<option value="' + number + '" ' + selected + '>' + number + '</option>');
       }
 
       $select.bind('change', function(e) {
         _this.set($(this).val());
-        _this.obj.process();
+        obj.process();
       });
 
       return $('<span />', {
         'class': 'dynatable-per-page'
-      }).append("<span class='dynatable-per-page-label'>" + this.obj.settings.inputs.perPageText + "</span>").append($select);
+      }).append("<span class='dynatable-per-page-label'>" + settings.inputs.perPageText + "</span>").append($select);
     };
     this.attach = function() {
-      var $target = this.obj.settings.inputs.perPageTarget ? $(this.obj.settings.inputs.perPageTarget) : this.obj.$element;
-      $target[this.obj.settings.inputs.perPagePlacement](this.create());
+      var $target = settings.inputs.perPageTarget ? $(settings.inputs.perPageTarget) : obj.$element;
+      $target[settings.inputs.perPagePlacement](this.create());
     };
     this.set = function(number) {
-      this.obj.paginationPage.set(1);
-      this.obj.settings.dataset.perPage = parseInt(number);
+      obj.paginationPage.set(1);
+      settings.dataset.perPage = parseInt(number);
     };
   };
 
-  function PaginationLinks() {
+  function PaginationLinks(obj, settings) {
+    var _this = this;
+
   // pagination links which update dataset.page attribute
     this.initOnLoad = function() {
-      return this.obj.settings.features.paginate;
+      return settings.features.paginate;
     };
     this.init = function() {
       this.attach();
     };
     this.create = function() {
-      var _this = this,
-          $pageLinks = $('<ul></ul>', {
-            id: 'dynatable-pagination-links-' + this.obj.element.id,
+      var $pageLinks = $('<ul></ul>', {
+            id: 'dynatable-pagination-links-' + obj.element.id,
             'class': 'dynatable-pagination-links',
             html: '<span>Pages: </span>'
           }),
           pageLinkClass = 'dynatable-page-link',
           activePageClass = 'dynatable-active-page',
-          pages = Math.ceil(this.obj.settings.dataset.queryRecordCount / this.obj.settings.dataset.perPage),
-          page = this.obj.settings.dataset.page,
+          pages = Math.ceil(settings.dataset.queryRecordCount / settings.dataset.perPage),
+          page = settings.dataset.page,
           breaks = [
-            this.obj.settings.inputs.paginationGap[0],
-            this.obj.settings.dataset.page - this.obj.settings.inputs.paginationGap[1],
-            this.obj.settings.dataset.page + this.obj.settings.inputs.paginationGap[2],
-            (pages + 1) - this.obj.settings.inputs.paginationGap[3]
+            settings.inputs.paginationGap[0],
+            settings.dataset.page - settings.inputs.paginationGap[1],
+            settings.dataset.page + settings.inputs.paginationGap[2],
+            (pages + 1) - settings.inputs.paginationGap[3]
           ],
           $link;
 
@@ -1249,10 +1238,10 @@
           if (page == i) { $link.addClass(activePageClass); }
 
           // If i is not between one of the following
-          // (1 + (this.obj.settings.paginationGap[0]))
-          // (page - this.obj.settings.paginationGap[1])
-          // (page + this.obj.settings.paginationGap[2])
-          // (pages - this.obj.settings.paginationGap[3])
+          // (1 + (settings.paginationGap[0]))
+          // (page - settings.paginationGap[1])
+          // (page + settings.paginationGap[2])
+          // (pages - settings.paginationGap[3])
           var breakIndex = $.inArray(i, breaks),
               nextBreak = breaks[breakIndex + 1];
           if (breakIndex > 0 && i !== 1 && nextBreak && nextBreak > (i + 1)) {
@@ -1262,18 +1251,18 @@
 
         }
 
-        if (this.obj.settings.inputs.paginationPrev && i === 1) {
+        if (settings.inputs.paginationPrev && i === 1) {
           var $prevLink = $('<a></a>',{
-            html: _this.obj.settings.inputs.paginationPrev,
+            html: settings.inputs.paginationPrev,
             'class': pageLinkClass + ' dynatable-page-prev',
             'data-dynatable-page': page - 1
           });
           if (page === 1) { $prevLink.addClass(activePageClass); }
           $link = $link.before($prevLink);
         }
-        if (_this.obj.settings.inputs.paginationNext && i === pages) {
+        if (settings.inputs.paginationNext && i === pages) {
           var $nextLink = $('<a></a>',{
-            html: this.obj.settings.inputs.paginationNext,
+            html: settings.inputs.paginationNext,
             'class': pageLinkClass + ' dynatable-page-next',
             'data-dynatable-page': page + 1
           });
@@ -1285,7 +1274,7 @@
       $pageLinks.children().wrap('<li></li>');
 
       // only bind page handler to non-active pages
-      var selector = '#dynatable-pagination-links-' + this.obj.element.id + ' .' + pageLinkClass + ':not(.' + activePageClass + ')';
+      var selector = '#dynatable-pagination-links-' + obj.element.id + ' .' + pageLinkClass + ':not(.' + activePageClass + ')';
       // kill any existing delegated-bindings so they don't stack up
       $(document).undelegate(selector, 'click.dynatable');
       $(document).delegate(selector, 'click.dynatable', function(e) {
@@ -1293,8 +1282,8 @@
         $this.closest('.dynatable-pagination-links').find('.' + activePageClass).removeClass(activePageClass);
         $this.addClass(activePageClass);
 
-        _this.obj.paginationPage.set($this.data('dynatable-page'));
-        _this.obj.process();
+        obj.paginationPage.set($this.data('dynatable-page'));
+        obj.process();
         e.preventDefault();
       });
 
@@ -1303,8 +1292,8 @@
     this.attach = function() {
       // append page liks *after* delegate-event-binding so it doesn't need to
       // find and select all page links to bind event
-      var $target = this.obj.settings.inputs.paginationLinkTarget ? $(this.obj.settings.inputs.paginationLinkTarget) : this.obj.$element;
-      $target[this.obj.settings.inputs.paginationLinkPlacement](this.obj.paginationLinks.create());
+      var $target = settings.inputs.paginationLinkTarget ? $(settings.inputs.paginationLinkTarget) : obj.$element;
+      $target[settings.inputs.paginationLinkPlacement](obj.paginationLinks.create());
     };
   };
 
