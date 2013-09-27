@@ -35,10 +35,10 @@
       build,
       processAll,
       initModel,
-      defaultRowFilter,
-      defaultCellFilter,
-      defaultAttributeFilter,
-      defaultAttributeUnfilter;
+      defaultRowWriter,
+      defaultCellWriter,
+      defaultAttributeWriter,
+      defaultAttributeReader;
 
   //-----------------------------------------------------------------
   // Cached plugin global defaults
@@ -99,14 +99,14 @@
       sortTypes: {},
       records: null
     },
-    filters: {
-      _rowFilter: defaultRowFilter,
-      _cellFilter: defaultCellFilter,
-      _attributeFilter: defaultAttributeFilter
+    writers: {
+      _rowWriter: defaultRowWriter,
+      _cellWriter: defaultCellWriter,
+      _attributeWriter: defaultAttributeWriter
     },
-    unfilters: {
-      _rowUnfilter: null,
-      _attributeUnfilter: defaultAttributeUnfilter
+    readers: {
+      _rowReader: null,
+      _attributeReader: defaultAttributeReader
     },
     params: {
       dynatable: 'dynatable',
@@ -265,14 +265,14 @@
     this.$element.trigger('dynatable:afterProcess', data);
   };
 
-  function defaultRowFilter(rowIndex, record, columns, cellFilter) {
+  function defaultRowWriter(rowIndex, record, columns, cellWriter) {
     var $tr = $('<tr></tr>');
 
     // grab the record's attribute for each column
     for (var i = 0, len = columns.length; i < len; i++) {
       var column = columns[i],
-      html = column.dataFilter(record),
-      $td = cellFilter(html);
+      html = column.dataWriter(record),
+      $td = cellWriter(html);
 
       if (column.hidden) {
         $td.hide();
@@ -286,19 +286,19 @@
     return $tr;
   };
 
-  function defaultCellFilter(html) {
+  function defaultCellWriter(html) {
     return $('<td></td>', {
       html: html
     });
   };
 
-  function defaultAttributeFilter(record) {
+  function defaultAttributeWriter(record) {
     // `this` is the column object in settings.columns
     // TODO: automatically convert common types, such as arrays and objects, to string
     return record[this.id];
   };
 
-  function defaultAttributeUnfilter(cell, record) {
+  function defaultAttributeReader(cell, record) {
     return $(cell).html();
   };
 
@@ -334,15 +334,15 @@
     this.update = function() {
       var $rows = $(),
           columns = settings.table.columns,
-          rowFilter = settings.filters._rowFilter,
-          cellFilter = settings.filters._cellFilter;
+          rowWriter = settings.writers._rowWriter,
+          cellWriter = settings.writers._cellWriter;
 
       obj.$element.trigger('dynatable:beforeUpdate', $rows);
 
       // loop through records
       for (var i = 0, len = settings.dataset.records.length; i < len; i++) {
         var record = settings.dataset.records[i],
-            $tr = rowFilter(i, record, columns, cellFilter);
+            $tr = rowWriter(i, record, columns, cellWriter);
         $rows = $rows.add($tr);
       }
 
@@ -433,8 +433,8 @@
         index: position,
         label: label,
         id: id,
-        dataFilter: settings.filters[id] || settings.filters._attributeFilter,
-        dataUnfilter: settings.unfilters[id] || settings.unfilters._attributeUnfilter,
+        dataWriter: settings.writers[id] || settings.writers._attributeWriter,
+        dataReader: settings.readers[id] || settings.readers._attributeReader,
         sorts: sorts,
         hidden: $column.css('display') === 'none',
         textAlign: $column.css('text-align')
@@ -644,7 +644,7 @@
             // retrieve the contents of this column for each record)
             obj.domColumns.add(obj.domColumns.generate(), columns.length, false, true); // don't skipAppend, do skipUpdate
           }
-          var value = columns[index].dataUnfilter(this, record),
+          var value = columns[index].dataReader(this, record),
               attr = columns[index].id;
 
           // If value from table is HTML, let's get and cache the text equivalent for
@@ -661,8 +661,8 @@
         });
         // Allow configuration function which alters record based on attributes of
         // table row (e.g. from html5 data- attributes)
-        if (typeof(settings.unfilters._rowUnfilter) === "function") {
-          settings.unfilters._rowUnfilter(index, this, record);
+        if (typeof(settings.readers._rowReader) === "function") {
+          settings.readers._rowReader(index, this, record);
         }
         records.push(record);
       });

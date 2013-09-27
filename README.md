@@ -6,7 +6,7 @@ See the [full documentation](http://opensource.alfajango.com/dynatable).
 
 TODO:
 
-* Change `unfilter`s and `filter`s to `reader`s and `writer`s.
+* ~~Change `unfilter`s and `filter`s to `reader`s and `writer`s.~~
 * ~~Clean up defaults that are functions, by abstracting into internal
   named functions which can be re-used.~~
 * Change default sort functions to underscore-namespaced functions so as
