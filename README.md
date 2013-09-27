@@ -37,3 +37,9 @@ TODO:
   rendered DOM styling and speed up all operations that position the
   indicator (see [CSS absolute
   centering](http://codepen.io/shshaw/full/gEiDt)).
+
+Refactor performance benchmarks:
+
+http://jsperf.com/dynatable-prototypal-refactor
+
+http://jsperf.com/dynatable-refactor/2
