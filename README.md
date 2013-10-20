@@ -37,6 +37,12 @@ TODO:
   rendered DOM styling and speed up all operations that position the
   indicator (see [CSS absolute
   centering](http://codepen.io/shshaw/full/gEiDt)).
+* Add data-dynatable-attr="name" support for reading records from
+  arbitrary markup (so that you don't need to write a custom rowReader
+  function when starting with e.g. a stylized list).
+* Make sort function first lookup settings.sortTypes[attr], then look
+  directly for sort sorts.functions[attr], and then finally
+  sorts.guessType only if neither of the first two exist.
 
 Refactor performance benchmarks:
 
