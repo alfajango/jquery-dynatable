@@ -939,6 +939,23 @@
       return $link;
     };
 
+    this.removeAll = function() {
+      obj.$element.find(settings.table.headRowSelector).children('th,td').each(function(){
+        _this.removeAllArrows();
+        _this.removeOne(this);
+      });
+    };
+
+    this.removeOne = function(cell) {
+      var $cell = $(cell),
+          $link = $cell.find('.dynatable-sort-header');
+      if ($link.length) {
+        var html = $link.html();
+        $link.remove();
+        $cell.html($cell.html() + html);
+      }
+    };
+
     this.attach = function() {
       obj.$element.find(settings.table.headRowSelector).children('th,td').each(function(){
         _this.attachOne(this);
