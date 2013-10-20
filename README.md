@@ -43,6 +43,8 @@ TODO:
 * Make sort function first lookup settings.sortTypes[attr], then look
   directly for sort sorts.functions[attr], and then finally
   sorts.guessType only if neither of the first two exist.
+* Add global remove/cleanup function (opposite of init) to allow
+  removing dynatable via JS.
 
 Refactor performance benchmarks:
 
