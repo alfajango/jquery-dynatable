@@ -60,7 +60,7 @@ all, I wanted a clean and elegant API that is fun to use.
 Currently the testing process consists of opening [the Dynatable
 documentation](http://os.alfajango.com/dynatable)
 ([source code
-here(https://github.com/alfajango/alfajango.github.com/blob/master/_posts/2012-01-09-dynatable.md)) in
+here](https://github.com/alfajango/alfajango.github.com/blob/master/_posts/2012-01-09-dynatable.md)) in
 each browser and making sure every example works. This is fine for the
 initial release, since it serves the dual purpose of helping us write
 the documentation and having a written functional use-case at once.
