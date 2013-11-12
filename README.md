@@ -4,7 +4,15 @@
 
 See the [full documentation](http://opensource.alfajango.com/dynatable).
 
-TODO:
+## Why?
+
+The purpose of Dynatable is to provide a simple, extensible API, which
+makes viewing and interacting with larger datasets easy. Dynatable
+provides a framework for implementing the most common elements out of
+the box, including sorting, searching and filtering. Above
+all, I wanted a clean and elegant API that is fun to use.
+
+## TODO:
 
 * ~~Change `unfilter`s and `filter`s to `reader`s and `writer`s.~~
 * ~~Clean up defaults that are functions, by abstracting into internal
@@ -45,9 +53,40 @@ TODO:
   sorts.guessType only if neither of the first two exist.
 * Add global remove/cleanup function (opposite of init) to allow
   removing dynatable via JS.
+* Support for Zepto?
 
-Refactor performance benchmarks:
+## Tests
+
+Currently the testing process consists of opening [the Dynatable
+documentation](http://os.alfajango.com/dynatable)
+([source code
+here(https://github.com/alfajango/alfajango.github.com/blob/master/_posts/2012-01-09-dynatable.md)) in
+each browser and making sure every example works. This is fine for the
+initial release, since it serves the dual purpose of helping us write
+the documentation and having a written functional use-case at once.
+However, one of the top priorities now is to automate each use-case in
+the docs as a test case within an automated test suite.
+
+If anyone out there thinks this sounds like fun, please contact me or
+even go ahead and create an issue/pull request. Otherwise, it will be at
+teh top of my priority list until I can get to it.
+
+## Miscellaneous
+
+### Refactor performance benchmarks
+
+For version 0.1.0, Dynatable went through a refactor to use prototypal
+inheritence as a more memory-efficient foundation. Here are some
+off-the-cuff benchmarks I set up when doing this.
+
+The performance increase was modest, according to these benchmarks, but
+more importantly, the code became a bit cleaner and easier to work with.
 
 http://jsperf.com/dynatable-prototypal-refactor
 
 http://jsperf.com/dynatable-refactor/2
+
+Currently, there's still a bit of performance improvement to be gained
+by further grouping DOM reads and writes (though they're already mostly
+grouped together), and by using JS string concatenation instead of
+jQuery to build the HTML for rendering step.
