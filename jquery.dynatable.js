@@ -266,30 +266,31 @@
   };
 
   function defaultRowWriter(rowIndex, record, columns, cellWriter) {
-    var $tr = $('<tr></tr>');
+    var tr = '';
 
     // grab the record's attribute for each column
     for (var i = 0, len = columns.length; i < len; i++) {
-      var column = columns[i],
-      html = column.dataWriter(record),
-      $td = cellWriter(html);
-
-      if (column.hidden) {
-        $td.hide();
-      }
-      if (column.textAlign) {
-        $td.css('text-align', column.textAlign);
-      }
-      $tr.append($td);
+      tr += cellWriter(columns[i], record);
     }
 
-    return $tr;
+    return '<tr>' + tr + '</tr>';
   };
 
-  function defaultCellWriter(html) {
-    return $('<td></td>', {
-      html: html
-    });
+  function defaultCellWriter(column, record) {
+    var html = column.attributeWriter(record),
+        td = '<td';
+
+    // keep cells for hidden column headers hidden
+    if (column.hidden) {
+      td += ' display="none"';
+    }
+
+    // keep cells aligned as their column headers are aligned
+    if (column.textAlign) {
+      td += ' style="text-align: ' + column.textAlign + ';"';
+    }
+
+    return td + '>' + html + '</td>';
   };
 
   function defaultAttributeWriter(record) {
@@ -332,18 +333,18 @@
     // update table contents with new records array
     // from query (whether ajax or not)
     this.update = function() {
-      var $rows = $(),
+      var rows = '',
           columns = settings.table.columns,
           rowWriter = settings.writers._rowWriter,
           cellWriter = settings.writers._cellWriter;
 
-      obj.$element.trigger('dynatable:beforeUpdate', $rows);
+      obj.$element.trigger('dynatable:beforeUpdate', rows);
 
       // loop through records
       for (var i = 0, len = settings.dataset.records.length; i < len; i++) {
         var record = settings.dataset.records[i],
-            $tr = rowWriter(i, record, columns, cellWriter);
-        $rows = $rows.add($tr);
+            tr = rowWriter(i, record, columns, cellWriter);
+        rows += tr;
       }
 
       // Appended dynatable interactive elements
@@ -386,9 +387,9 @@
         });
       }
       obj.$element.find(settings.table.bodyRowSelector).remove();
-      obj.$element.append($rows);
+      obj.$element.append(rows);
 
-      obj.$element.trigger('dynatable:afterUpdate', $rows);
+      obj.$element.trigger('dynatable:afterUpdate', rows);
     };
   };
 
@@ -433,8 +434,8 @@
         index: position,
         label: label,
         id: id,
-        dataWriter: settings.writers[id] || settings.writers._attributeWriter,
-        dataReader: settings.readers[id] || settings.readers._attributeReader,
+        attributeWriter: settings.writers[id] || settings.writers._attributeWriter,
+        attributeReader: settings.readers[id] || settings.readers._attributeReader,
         sorts: sorts,
         hidden: $column.css('display') === 'none',
         textAlign: $column.css('text-align')
@@ -644,7 +645,7 @@
             // retrieve the contents of this column for each record)
             obj.domColumns.add(obj.domColumns.generate(), columns.length, false, true); // don't skipAppend, do skipUpdate
           }
-          var value = columns[index].dataReader(this, record),
+          var value = columns[index].attributeReader(this, record),
               attr = columns[index].id;
 
           // If value from table is HTML, let's get and cache the text equivalent for
