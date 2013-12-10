@@ -71,6 +71,11 @@ If anyone out there thinks this sounds like fun, please contact me or
 even go ahead and create an issue/pull request. Otherwise, it will be at
 teh top of my priority list until I can get to it.
 
+## License
+
+Released under the Free Software Foundation's
+GNU Affero General Public License (AGPL).
+
 ## Miscellaneous
 
 ### Refactor performance benchmarks
