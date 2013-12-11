@@ -224,7 +224,7 @@
           // update table with new records
           _this.dom.update();
 
-          if (_this.settings.features.pushState && !skipPushState && history.pushState) {
+          if (!skipPushState && _this.state.initOnLoad()) {
             _this.state.push(data);
           }
         },
@@ -258,7 +258,7 @@
       this.dom.update();
       this.processingIndicator.hide();
 
-      if (this.settings.features.pushState && !skipPushState && history.pushState) {
+      if (!skipPushState && this.state.initOnLoad()) {
         this.state.push(data);
       }
     }
@@ -774,7 +774,7 @@
     this.init = function() {
       window.onpopstate = function(event) {
         if (event.state && event.state.dynatable) {
-          this.pop(event);
+          obj.state.pop(event);
         }
       }
     };
@@ -782,6 +782,8 @@
     this.push = function(data) {
       var urlString = window.location.search,
           urlOptions,
+          params,
+          hash,
           newParams,
           cacheStr,
           cache;
@@ -790,6 +792,9 @@
       $.extend(urlOptions, data);
 
       params = utility.refreshQueryString(urlString, data, settings);
+      if (params) { params = '?' + params; }
+      hash = window.location.hash;
+
       obj.$element.trigger('dynatable:push', data);
 
       cache = { dynatable: { dataset: settings.dataset } };
@@ -810,11 +815,11 @@
       cache.dynatable.dataset.perPageOptions = $.makeArray(cache.dynatable.dataset.perPageOptions);
 
       try {
-        window.history.pushState(cache, "Dynatable state", '?' + params);
+        window.history.pushState(cache, "Dynatable state", params + hash);
       } catch(error) {
         // Make cached records = null, so that `pop` will rerun process to retrieve records
         cache.dynatable.dataset.records = null;
-        window.history.pushState(cache, "Dynatable state", '?' + params);
+        window.history.pushState(cache, "Dynatable state", params + hash);
       }
     };
 
