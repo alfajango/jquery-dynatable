@@ -782,6 +782,7 @@
     this.push = function(data) {
       var urlString = window.location.search,
           urlOptions,
+          path,
           params,
           hash,
           newParams,
@@ -794,6 +795,7 @@
       params = utility.refreshQueryString(urlString, data, settings);
       if (params) { params = '?' + params; }
       hash = window.location.hash;
+      path = window.location.pathname;
 
       obj.$element.trigger('dynatable:push', data);
 
@@ -815,11 +817,11 @@
       cache.dynatable.dataset.perPageOptions = $.makeArray(cache.dynatable.dataset.perPageOptions);
 
       try {
-        window.history.pushState(cache, "Dynatable state", params + hash);
+        window.history.pushState(cache, "Dynatable state", path + params + hash);
       } catch(error) {
         // Make cached records = null, so that `pop` will rerun process to retrieve records
         cache.dynatable.dataset.records = null;
-        window.history.pushState(cache, "Dynatable state", params + hash);
+        window.history.pushState(cache, "Dynatable state", path + params + hash);
       }
     };
 
