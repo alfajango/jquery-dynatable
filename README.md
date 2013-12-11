@@ -89,7 +89,7 @@ more importantly, the code became a bit cleaner and easier to work with.
 
 http://jsperf.com/dynatable-prototypal-refactor
 
-http://jsperf.com/dynatable-refactor/2
+http://jsperf.com/dynatable-refactor/3
 
 Currently, there's still a bit of performance improvement to be gained
 by further grouping DOM reads and writes (though they're already mostly
