@@ -1211,7 +1211,14 @@
 
     this.init = function() {
       var pageUrl = window.location.search.match(new RegExp(settings.params.page + '=([^&]*)'));
-      this.set(pageUrl ? pageUrl[1] : 1);
+      // If page is present in URL parameters and pushState is enabled
+      // (meaning that it'd be possible for dynatable to have put the
+      // page parameter in the URL)
+      if (pageUrl && settings.features.pushState) {
+        this.set(pageUrl[1]);
+      } else {
+        this.set(1);
+      }
     };
 
     this.set = function(page) {
@@ -1229,10 +1236,15 @@
     this.init = function() {
       var perPageUrl = window.location.search.match(new RegExp(settings.params.perPage + '=([^&]*)'));
 
-      if (perPageUrl) {
-        this.set(perPageUrl[1]);
+      // If perPage is present in URL parameters and pushState is enabled
+      // (meaning that it'd be possible for dynatable to have put the
+      // perPage parameter in the URL)
+      if (perPageUrl && settings.features.pushState) {
+        // Don't reset page to 1 on init, since it might override page
+        // set on init from URL
+        this.set(perPageUrl[1], true);
       } else {
-        this.set(settings.dataset.perPageDefault);
+        this.set(settings.dataset.perPageDefault, true);
       }
 
       if (settings.features.perPageSelect) {
@@ -1267,8 +1279,8 @@
       $target[settings.inputs.perPagePlacement](this.create());
     };
 
-    this.set = function(number) {
-      obj.paginationPage.set(1);
+    this.set = function(number, skipResetPage) {
+      if (!skipResetPage) { obj.paginationPage.set(1); }
       settings.dataset.perPage = parseInt(number);
     };
   };
