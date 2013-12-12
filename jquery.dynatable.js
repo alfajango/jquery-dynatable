@@ -803,6 +803,7 @@
       obj.$element.trigger('dynatable:push', data);
 
       cache = { dynatable: { dataset: settings.dataset } };
+      if (!firstPush) { cache.dynatable.scrollTop = $(window).scrollTop(); }
       cacheStr = JSON.stringify(cache);
 
       // Mozilla has a 640k char limit on what can be stored in pushState.
@@ -831,6 +832,8 @@
     this.pop = function(event) {
       var data = event.state.dynatable;
       settings.dataset = data.dataset;
+
+      if (data.scrollTop) { $(window).scrollTop(data.scrollTop); }
 
       // If dataset.records is cached from pushState
       if ( data.dataset.records ) {
