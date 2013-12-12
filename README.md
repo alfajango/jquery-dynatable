@@ -2,7 +2,7 @@
 
 *A funner, semantic, HTML5+JSON, interactive table plugin.*
 
-See the [full documentation](http://opensource.alfajango.com/dynatable).
+See the [full documentation](http://www.dynatable.com).
 
 ## Why?
 
@@ -73,8 +73,10 @@ teh top of my priority list until I can get to it.
 
 ## License
 
-Released under the Free Software Foundation's
-GNU Affero General Public License (AGPL).
+Dual licensed, released under the Free Software Foundation's
+GNU Affero General Public License (AGPL), or see [license
+information](http://www.dynatable.com/license) for proprietary or
+commercial applications.
 
 ## Miscellaneous
 
