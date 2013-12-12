@@ -787,7 +787,10 @@
           hash,
           newParams,
           cacheStr,
-          cache;
+          cache,
+          // replaceState on initial load, then pushState after that
+          firstPush = !(window.history.state && window.history.state.dynatable),
+          pushFunction = firstPush ? 'replaceState' : 'pushState';
 
       if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
       $.extend(urlOptions, data);
@@ -817,11 +820,11 @@
       cache.dynatable.dataset.perPageOptions = $.makeArray(cache.dynatable.dataset.perPageOptions);
 
       try {
-        window.history.pushState(cache, "Dynatable state", path + params + hash);
+        window.history[pushFunction](cache, "Dynatable state", path + params + hash);
       } catch(error) {
         // Make cached records = null, so that `pop` will rerun process to retrieve records
         cache.dynatable.dataset.records = null;
-        window.history.pushState(cache, "Dynatable state", path + params + hash);
+        window.history[pushFunction](cache, "Dynatable state", path + params + hash);
       }
     };
 
