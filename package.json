@@ -36,13 +36,13 @@
   ],
   "licenses": [
     {
-      "name": "MIT",
-      "url": "http://www.opensource.org/licenses/mit-license.php"
+      "name": "AGPL",
+      "url": "http://www.dynatable.com/license"
     },
     {
-      "name": "GPL",
-      "url": "http://www.gnu.org/licenses/gpl.html"
+      "name": "Proprietary License",
+      "url": "http://www.dynatable.com/license"
     }
   ],
-  "homepage": "http://os.alfajango.com/dynatable"
+  "homepage": "http://www.dynatable.com"
 }
