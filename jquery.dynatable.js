@@ -1,5 +1,5 @@
 /*
- * jQuery Dynatable plugin 0.2.1
+ * jQuery Dynatable plugin 0.2.2
  *
  * Copyright (c) 2013 Steve Schwartz (JangoSteve)
  *
