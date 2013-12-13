@@ -282,7 +282,7 @@
 
     // keep cells for hidden column headers hidden
     if (column.hidden) {
-      td += ' display="none"';
+      td += ' style="display:none;"';
     }
 
     // keep cells aligned as their column headers are aligned
