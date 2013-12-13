@@ -14,7 +14,7 @@ all, I wanted a clean and elegant API that is fun to use.
 
 ## TODO:
 
-- [x] Change `unfilter`s and `filter`s to `reader`s and `writer`s.
+[x] Change `unfilter`s and `filter`s to `reader`s and `writer`s.
 - [x] Clean up defaults that are functions, by abstracting into internal
   named functions which can be re-used.
 - [ ] Change default sort functions to underscore-namespaced functions so as
