@@ -1,0 +1,27 @@
+{
+  "name": "dynatable",
+  "version": "0.2.2",
+  "homepage": "http://www.dynatable.com",
+  "authors": [
+    "Steve Schwartz <steve@alfajango.com>"
+  ],
+  "description": "A funner, semantic, HTML5+JSON, interactive table plugin.",
+  "dependencies": [
+    "jquery": ">=1.6"
+  ],
+  "main": "jquery.dynatable.js",
+  "keywords": [
+    "table",
+    "datatables",
+    "dynamic",
+    "table"
+  ],
+  "license": "AGPL",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
