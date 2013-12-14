@@ -280,14 +280,20 @@
     var html = column.attributeWriter(record),
         td = '<td';
 
-    // keep cells for hidden column headers hidden
-    if (column.hidden) {
-      td += ' display="none"';
-    }
+    if (column.hidden || column.textAlign) {
+      td += ' style="';
 
-    // keep cells aligned as their column headers are aligned
-    if (column.textAlign) {
-      td += ' style="text-align: ' + column.textAlign + ';"';
+      // keep cells for hidden column headers hidden
+      if (column.hidden) {
+        td += 'display: none;';
+      }
+
+      // keep cells aligned as their column headers are aligned
+      if (column.textAlign) {
+        td += 'text-align: ' + column.textAlign + ';';
+      }
+
+      td += '"';
     }
 
     return td + '>' + html + '</td>';
