@@ -19,8 +19,9 @@
   "license": "AGPL",
   "ignore": [
     "**/.*",
+    "CONTRIBUTING.md",
     "node_modules",
-    "bower_components",
+    "vendor",
     "test",
     "tests"
   ]
