@@ -70,6 +70,10 @@
       recordCountPlacement: 'after',
       paginationLinkTarget: null,
       paginationLinkPlacement: 'after',
+      paginationClass: 'dynatable-pagination-links',
+      paginationLinkClass: 'dynatable-page-link',
+      paginationActiveClass: 'dynatable-active-page',
+      paginationDisabledClass: 'dynatable-disabled-page',
       paginationPrev: 'Previous',
       paginationNext: 'Next',
       paginationGap: [1,2,2,1],
@@ -1312,13 +1316,10 @@
     };
 
     this.create = function() {
-      var $pageLinks = $('<ul></ul>', {
-            id: 'dynatable-pagination-links-' + obj.element.id,
-            'class': 'dynatable-pagination-links',
-            html: '<span>Pages: </span>'
-          }),
-          pageLinkClass = 'dynatable-page-link',
-          activePageClass = 'dynatable-active-page',
+      var pageLinks = '<ul id="' + 'dynatable-pagination-links-' + obj.element.id + '" class="' + settings.inputs.paginationClass + '">',
+          pageLinkClass = settings.inputs.paginationLinkClass,
+          activePageClass = settings.inputs.paginationActiveClass,
+          disabledPageClass = settings.inputs.paginationDisabledClass,
           pages = Math.ceil(settings.dataset.queryRecordCount / settings.dataset.perPage),
           page = settings.dataset.page,
           breaks = [
@@ -1326,65 +1327,76 @@
             settings.dataset.page - settings.inputs.paginationGap[1],
             settings.dataset.page + settings.inputs.paginationGap[2],
             (pages + 1) - settings.inputs.paginationGap[3]
-          ],
-          $link;
+          ];
+
+      pageLinks += '<li><span>Pages: </span></li>';
 
       for (var i = 1; i <= pages; i++) {
         if ( (i > breaks[0] && i < breaks[1]) || (i > breaks[2] && i < breaks[3])) {
           // skip to next iteration in loop
           continue;
         } else {
-          $link = $('<a></a>',{
-            html: i,
-            'class': pageLinkClass,
-            'data-dynatable-page': i
-          }).appendTo($pageLinks);
+          var link = '<a data-dynatable-page=' + i + ' class="' + pageLinkClass,
+              li = '<li',
+              breakIndex,
+              nextBreak;
 
-          if (page == i) { $link.addClass(activePageClass); }
+          if (page == i) {
+            link += ' ' + activePageClass;
+            li += ' class="' + activePageClass + '"';
+          }
+
+          link += '">' + i + '</a>';
+          li += '>' + link + '</li>';
 
           // If i is not between one of the following
           // (1 + (settings.paginationGap[0]))
           // (page - settings.paginationGap[1])
           // (page + settings.paginationGap[2])
           // (pages - settings.paginationGap[3])
-          var breakIndex = $.inArray(i, breaks),
-              nextBreak = breaks[breakIndex + 1];
+          breakIndex = $.inArray(i, breaks);
+          nextBreak = breaks[breakIndex + 1];
           if (breakIndex > 0 && i !== 1 && nextBreak && nextBreak > (i + 1)) {
-            var $ellip = $('<span class="dynatable-page-break">&hellip;</span>');
-            $link = breakIndex < 2 ? $link.before($ellip) : $link.after($ellip);
+            var ellip = '<li><span class="dynatable-page-break">&hellip;</span></li>';
+            li = breakIndex < 2 ? ellip + li : li + ellip;
           }
 
-        }
+          if (settings.inputs.paginationPrev && i === 1) {
+            var prevLink = '<a data-dynatable-page=' + ( page - 1 ) + ' class="dynatable-page-prev ' + pageLinkClass,
+                prevLi = '<li';
+            if (page === 1) {
+              prevLink += ' ' + disabledPageClass;
+              prevLi += ' class="' + disabledPageClass + '"';
+            }
+            prevLink += '">' + settings.inputs.paginationPrev + '</a>';
+            prevLi += '>' + prevLink + '</li>';
+            li = prevLi + li;
+          }
+          if (settings.inputs.paginationNext && i === pages) {
+            var nextLink = '<a data-dynatable-page=' + ( page + 1 ) + ' class="dynatable-page-next ' + pageLinkClass,
+                nextLi = '<li';
+            if (page === pages) {
+              nextLink += ' ' + disabledPageClass;
+              nextLi += ' class="' + disabledPageClass + '"';
+            }
+            nextLink += '">' + settings.inputs.paginationNext + '</a>';
+            nextLi += '>' + nextLink + '</li>';
+            li += nextLi;
+          }
 
-        if (settings.inputs.paginationPrev && i === 1) {
-          var $prevLink = $('<a></a>',{
-            html: settings.inputs.paginationPrev,
-            'class': pageLinkClass + ' dynatable-page-prev',
-            'data-dynatable-page': page - 1
-          });
-          if (page === 1) { $prevLink.addClass(activePageClass); }
-          $link = $link.before($prevLink);
-        }
-        if (settings.inputs.paginationNext && i === pages) {
-          var $nextLink = $('<a></a>',{
-            html: settings.inputs.paginationNext,
-            'class': pageLinkClass + ' dynatable-page-next',
-            'data-dynatable-page': page + 1
-          });
-          if (page === pages) { $nextLink.addClass(activePageClass); }
-          $link = $link.after($nextLink);
+          pageLinks += li;
         }
       }
 
-      $pageLinks.children().wrap('<li></li>');
+      pageLinks += '</ul>';
 
-      // only bind page handler to non-active pages
-      var selector = '#dynatable-pagination-links-' + obj.element.id + ' .' + pageLinkClass + ':not(.' + activePageClass + ')';
+      // only bind page handler to non-active and non-disabled page links
+      var selector = '#dynatable-pagination-links-' + obj.element.id + ' a.' + pageLinkClass + ':not(.' + activePageClass + ',.' + disabledPageClass + ')';
       // kill any existing delegated-bindings so they don't stack up
       $(document).undelegate(selector, 'click.dynatable');
       $(document).delegate(selector, 'click.dynatable', function(e) {
         $this = $(this);
-        $this.closest('.dynatable-pagination-links').find('.' + activePageClass).removeClass(activePageClass);
+        $this.closest(settings.inputs.paginationClass).find('.' + activePageClass).removeClass(activePageClass);
         $this.addClass(activePageClass);
 
         obj.paginationPage.set($this.data('dynatable-page'));
@@ -1392,7 +1404,7 @@
         e.preventDefault();
       });
 
-      return $pageLinks;
+      return pageLinks;
     };
 
     this.attach = function() {
