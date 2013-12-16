@@ -35,14 +35,25 @@ th a:hover {
   cursor: pointer;
 }
 
+.dynatable-active-page,
+.dynatable-disabled-page {
+  cursor: text;
+}
+.dynatable-active-page:hover,
+.dynatable-disabled-page:hover {
+  text-decoration: none;
+}
+
 .dynatable-active-page {
   background: #71AF5A;
   border-radius: 5px;
   color: #fff;
 }
-.dynatable-page-prev.dynatable-active-page,
-.dynatable-page-next.dynatable-active-page {
+.dynatable-active-page:hover {
+  color: #fff;
+}
+.dynatable-disabled-page,
+.dynatable-disabled-page:hover {
   background: none;
   color: #999;
-  cursor: text;
 }
