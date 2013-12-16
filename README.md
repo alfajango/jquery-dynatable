@@ -2,7 +2,7 @@
 
 *A funner, semantic, HTML5+JSON, interactive table plugin.*
 
-See the [full documentation](http://www.dynatable.com).
+See the [full documentation with demos](http://www.dynatable.com).
 
 ## Why?
 
@@ -34,8 +34,10 @@ all, I wanted a clean and elegant API that is fun to use.
   [benchmark](http://jsperf.com/object-create-vs-constructor-vs-object-literal/7)).~~
 * ~~Use for loops instead of $.each where possible to improve
   performance.~~
-* Use strings and/or document fragments for writing to DOM, instead of
-  jQuery, by default to improve writing performance.
+* ~~Use strings and/or document fragments for writing to DOM, instead of
+  jQuery, by default to improve writing performance.~~
+* Use templated strings to write pagination and other inputs.
+* Make class names for input elements configurable.
 * Use Chrome profiler to find any performance bottlenecks and fix.
 * Simplify API by separating internal-only and accessible model
   functions.
