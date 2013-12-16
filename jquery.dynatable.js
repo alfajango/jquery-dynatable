@@ -1336,18 +1336,9 @@
           // skip to next iteration in loop
           continue;
         } else {
-          var link = '<a data-dynatable-page=' + i + ' class="' + pageLinkClass,
-              li = '<li',
+          var li = obj.paginationLinks.buildLink(i, i, pageLinkClass, page == i, activePageClass),
               breakIndex,
               nextBreak;
-
-          if (page == i) {
-            link += ' ' + activePageClass;
-            li += ' class="' + activePageClass + '"';
-          }
-
-          link += '">' + i + '</a>';
-          li += '>' + link + '</li>';
 
           // If i is not between one of the following
           // (1 + (settings.paginationGap[0]))
@@ -1362,25 +1353,11 @@
           }
 
           if (settings.inputs.paginationPrev && i === 1) {
-            var prevLink = '<a data-dynatable-page=' + ( page - 1 ) + ' class="dynatable-page-prev ' + pageLinkClass,
-                prevLi = '<li';
-            if (page === 1) {
-              prevLink += ' ' + disabledPageClass;
-              prevLi += ' class="' + disabledPageClass + '"';
-            }
-            prevLink += '">' + settings.inputs.paginationPrev + '</a>';
-            prevLi += '>' + prevLink + '</li>';
+            var prevLi = obj.paginationLinks.buildLink(page - 1, settings.inputs.paginationPrev, pageLinkClass, page === 1, disabledPageClass);
             li = prevLi + li;
           }
           if (settings.inputs.paginationNext && i === pages) {
-            var nextLink = '<a data-dynatable-page=' + ( page + 1 ) + ' class="dynatable-page-next ' + pageLinkClass,
-                nextLi = '<li';
-            if (page === pages) {
-              nextLink += ' ' + disabledPageClass;
-              nextLi += ' class="' + disabledPageClass + '"';
-            }
-            nextLink += '">' + settings.inputs.paginationNext + '</a>';
-            nextLi += '>' + nextLink + '</li>';
+            var nextLi = obj.paginationLinks.buildLink(page + 1, settings.inputs.paginationNext, pageLinkClass, page === pages, disabledPageClass);
             li += nextLi;
           }
 
@@ -1405,6 +1382,21 @@
       });
 
       return pageLinks;
+    };
+
+    this.buildLink = function(page, label, linkClass, conditional, conditionalClass) {
+      var link = '<a data-dynatable-page=' + page + ' class="' + linkClass,
+          li = '<li';
+
+      if (conditional) {
+        link += ' ' + conditionalClass;
+        li += ' class="' + conditionalClass + '"';
+      }
+
+      link += '">' + label + '</a>';
+      li += '>' + link + '</li>';
+
+      return li;
     };
 
     this.attach = function() {
