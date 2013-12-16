@@ -1,8 +1,0 @@
-{
-  "records": [
-    {"id": 1, "name": "Ann Arbor"},
-    {"id": 2, "name": "Costa Rica"}
-  ],
-  "totalRecordCount": 2,
-  "queryRecordCount": 2
-}
