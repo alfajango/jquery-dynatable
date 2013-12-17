@@ -825,7 +825,7 @@
       // Since we don't know what the actual limit will be in any given situation, we'll just try caching and rescue
       // any exceptions by retrying pushState without caching the records.
       //
-      // I have aboslutely no idea why perPageOptions suddenly becomes an array-like object instead of an array,
+      // I have absolutely no idea why perPageOptions suddenly becomes an array-like object instead of an array,
       // but just recently, this started throwing an error if I don't convert it:
       // 'Uncaught Error: DATA_CLONE_ERR: DOM Exception 25'
       cache.dynatable.dataset.perPageOptions = $.makeArray(cache.dynatable.dataset.perPageOptions);
@@ -1091,7 +1091,7 @@
         if (settings.dataset.queries.hasOwnProperty(query)) {
           var value = settings.dataset.queries[query];
           if (_this.functions[query] === undefined) {
-            // Try to lazily evaluate query from column names if not explictly defined
+            // Try to lazily evaluate query from column names if not explicitly defined
             var queryColumn = utility.findObjectInArray(settings.table.columns, {id: query});
             if (queryColumn) {
               _this.functions[query] = function(record, queryValue) {
@@ -1400,7 +1400,7 @@
     };
 
     this.attach = function() {
-      // append page liks *after* delegate-event-binding so it doesn't need to
+      // append page links *after* delegate-event-binding so it doesn't need to
       // find and select all page links to bind event
       var $target = settings.inputs.paginationLinkTarget ? $(settings.inputs.paginationLinkTarget) : obj.$element;
       $target[settings.inputs.paginationLinkPlacement](obj.paginationLinks.create());
@@ -1542,7 +1542,7 @@
             continue;
           }
 
-          // If we havne't returned true by now, then we actually want to update the parameter in the URL
+          // If we haven't returned true by now, then we actually want to update the parameter in the URL
           if (data[label]) {
             urlOptions[label] = data[label];
           } else {
