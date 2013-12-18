@@ -176,6 +176,8 @@
   };
 
   build = function() {
+    this.$element.trigger('dynatable:preinit', this);
+
     for (model in modelPrototypes) {
       if (modelPrototypes.hasOwnProperty(model)) {
         var modelInstance = this[model] = new modelPrototypes[model](this, this.settings);
@@ -1407,7 +1409,7 @@
     };
   };
 
-  utility = {
+  utility = dt.utility = {
     normalizeText: function(text, style) {
       text = this.textTransform[style](text);
       return text;
