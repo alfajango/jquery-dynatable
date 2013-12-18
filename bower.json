@@ -1,22 +1,40 @@
 {
   "name": "dynatable",
-  "version": "0.2.2",
-  "homepage": "http://www.dynatable.com",
-  "authors": [
-    "Steve Schwartz <steve@alfajango.com>"
-  ],
   "description": "A funner, semantic, HTML5+JSON, interactive table plugin.",
+  "version": "0.2.2",
+  "keywords": [
+    "table",
+    "datatables",
+    "dynamic"
+  ],
+  "authors": [
+    {
+      "name": "Steve Schwartz",
+      "email": "steve@alfajango.com",
+      "homepage": "http://www.alfajango.com/blog"
+    }
+  ],
   "dependencies": [
     "jquery": ">=1.6"
   ],
   "main": "jquery.dynatable.js",
-  "keywords": [
-    "table",
-    "datatables",
-    "dynamic",
-    "table"
+  "repository"	: [
+    {
+      "type": "git",
+      "url": "https://github.com/jangosteve/jquery-dynatable.git"
+    }
   ],
-  "license": "AGPL",
+  "license": [
+    {
+      "name": "AGPL",
+      "url": "http://www.dynatable.com/license"
+    },
+    {
+      "name": "Proprietary License",
+      "url": "http://www.dynatable.com/license"
+    }
+  ],
+  "homepage": "http://www.dynatable.com",
   "ignore": [
     "**/.*",
     "CONTRIBUTING.md",
