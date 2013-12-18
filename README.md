@@ -12,6 +12,12 @@ provides a framework for implementing the most common elements out of
 the box, including sorting, searching and filtering. Above
 all, I wanted a clean and elegant API that is fun to use.
 
+## Quickstart
+
+To install Dynatable:
+
+* [Download the latest release](http://jspkg.com/packages/dynatable)
+
 ## TODO:
 
 * ~~Change `unfilter`s and `filter`s to `reader`s and `writer`s.~~
@@ -73,7 +79,23 @@ If anyone out there thinks this sounds like fun, please contact me or
 even go ahead and create an issue/pull request. Otherwise, it will be at
 teh top of my priority list until I can get to it.
 
-## License
+## Contributing
+
+Please see the [Contributing Guidelines](https://github.com/JangoSteve/jquery-dynatable/blob/master/CONTRIBUTING.md).
+
+## Author
+
+Steve Schwartz -
+[JangoSteve on Github](https://github.com/JangoSteve),
+[@jangosteve on Twitter](https://twitter.com/jangosteve)
+
+![Alfa Jango logo](https://s3.amazonaws.com/s3.alfajango.com/github-readmes/AlfaJango_Logo_Black_noname-tiny.png)
+[Alfa Jango Open Source](http://os.alfajango.com) -
+[@alfajango on Twitter](https://twitter.com/alfajango)
+
+## Copyright and License
+
+Copyright 2013 Alfa Jango LLC.
 
 Dual licensed, released under the Free Software Foundation's
 GNU Affero General Public License (AGPL), or see [license
@@ -99,3 +121,5 @@ Currently, there's still a bit of performance improvement to be gained
 by further grouping DOM reads and writes (though they're already mostly
 grouped together), and by using JS string concatenation instead of
 jQuery to build the HTML for rendering step.
+
+The new string concatenation has started to roll out in v0.2.
