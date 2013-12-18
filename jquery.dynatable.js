@@ -72,6 +72,8 @@
       paginationLinkPlacement: 'after',
       paginationClass: 'dynatable-pagination-links',
       paginationLinkClass: 'dynatable-page-link',
+      paginationPrevClass: 'dynatable-page-prev',
+      paginationNextClass: 'dynatable-page-next',
       paginationActiveClass: 'dynatable-active-page',
       paginationDisabledClass: 'dynatable-disabled-page',
       paginationPrev: 'Previous',
@@ -1355,11 +1357,11 @@
           }
 
           if (settings.inputs.paginationPrev && i === 1) {
-            var prevLi = obj.paginationLinks.buildLink(page - 1, settings.inputs.paginationPrev, pageLinkClass, page === 1, disabledPageClass);
+            var prevLi = obj.paginationLinks.buildLink(page - 1, settings.inputs.paginationPrev, pageLinkClass + ' ' + settings.inputs.paginationPrevClass, page === 1, disabledPageClass);
             li = prevLi + li;
           }
           if (settings.inputs.paginationNext && i === pages) {
-            var nextLi = obj.paginationLinks.buildLink(page + 1, settings.inputs.paginationNext, pageLinkClass, page === pages, disabledPageClass);
+            var nextLi = obj.paginationLinks.buildLink(page + 1, settings.inputs.paginationNext, pageLinkClass + ' ' + settings.inputs.paginationNextClass, page === pages, disabledPageClass);
             li += nextLi;
           }
 
