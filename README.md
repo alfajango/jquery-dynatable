@@ -19,7 +19,7 @@ all, I wanted a clean and elegant API that is fun to use.
   named functions which can be re-used.~~
 * Change default sort functions to underscore-namespaced functions so as
   not to conflict with record attributes called e.g. `search`.
-* Update sort function implementation to be analagous to search function
+* Update sort function implementation to be analogous to search function
   implementation (whereby if a sort function matching attribute name is
   present, it will be used for that attribute by default).
 * Namespace pushstate query parameters by dynatable instance id to
