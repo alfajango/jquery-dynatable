@@ -1641,6 +1641,12 @@
     // Taken from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/105074#105074
     randomHash: function() {
       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    },
+    // Adapted from http://stackoverflow.com/questions/377961/efficient-javascript-string-replacement/378001#378001
+    template: function(str, data) {
+      return str.replace(/%(\w*)%/g, function(match, key) {
+        return data.hasOwnProperty(key) ? data[key] : "";
+      });
     }
   };
 
