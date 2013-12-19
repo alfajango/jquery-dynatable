@@ -85,7 +85,8 @@
       perPagePlacement: 'before',
       perPageText: 'Show: ',
       recordCountText: 'Showing ',
-      processingText: 'Processing...'
+      processingText: 'Processing...',
+      searchFieldText: 'Search: '
     },
     dataset: {
       ajax: false,
@@ -1203,7 +1204,7 @@
           $searchSpan = $('<span></span>', {
             id: 'dynatable-search-' + obj.element.id,
             'class': 'dynatable-search',
-            text: 'Search: '
+            text: settings.inputs.searchFieldText
           }).append($search);
 
       $search
