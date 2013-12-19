@@ -84,7 +84,7 @@
       perPageText: 'Show: ',
       recordCountText: 'Showing ',
       processingText: 'Processing...',
-      searchFieldText: 'Search:'
+      searchFieldText: 'Search: '
     },
     dataset: {
       ajax: false,
