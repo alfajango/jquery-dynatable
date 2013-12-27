@@ -3,9 +3,8 @@
  *
  * Copyright (c) 2013 Steve Schwartz (JangoSteve)
  *
- * Dual licensed under the MIT and GPL licenses:
- *   http://www.opensource.org/licenses/mit-license.php
- *   http://www.gnu.org/licenses/gpl.html
+ * Dual licensed under the AGPL and Proprietary licenses:
+ *   http://www.dynatable.com/license/
  *
  * Date: Tue Aug 13 12:50:00 2013 -0500
  */
