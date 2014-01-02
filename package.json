@@ -26,12 +26,12 @@
   },
   "bugs": {
     "mail": "support@alfajango.com",
-    "web": "https://github.com/jangosteve/jquery-dynatable/issues"
+    "web": "https://github.com/alfajango/jquery-dynatable/issues"
   },
   "repositories"	: [
     {
       "type": "git",
-      "url": "https://github.com/jangosteve/jquery-dynatable.git"
+      "url": "https://github.com/alfajango/jquery-dynatable.git"
     }
   ],
   "licenses": [
