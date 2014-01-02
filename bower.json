@@ -14,9 +14,9 @@
       "homepage": "http://www.alfajango.com/blog"
     }
   ],
-  "dependencies": [
+  "dependencies": {
     "jquery": ">=1.6"
-  ],
+  },
   "main": "jquery.dynatable.js",
   "repository"	: [
     {
