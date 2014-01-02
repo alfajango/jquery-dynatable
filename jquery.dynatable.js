@@ -83,7 +83,13 @@
       perPageTarget: null,
       perPagePlacement: 'before',
       perPageText: 'Show: ',
-      recordCountText: 'Showing ',
+      recordCountPageBoundTemplate: '{pageLowerBound} to {pageUpperBound} of',
+      recordCountPageUnboundedTemplate: '{recordsShown} of',
+      recordCountTotalTemplate: '{recordsQueryCount} {collectionName}',
+      recordCountFilteredTemplate: ' (filtered from {recordsTotal} total records)',
+      recordCountText: 'Showing',
+      recordCountTextTemplate: '{text} {pageTemplate} {totalTemplate} {filteredTemplate}',
+      recordCountTemplate: '<span id="dynatable-record-count-{elementId}" class="dynatable-record-count">{textTemplate}</span>',
       processingText: 'Processing...'
     },
     dataset: {
@@ -705,28 +711,41 @@
     };
 
     this.create = function() {
-      var recordsShown = obj.records.count(),
-          recordsQueryCount = settings.dataset.queryRecordCount,
-          recordsTotal = settings.dataset.totalRecordCount,
-          text = settings.inputs.recordCountText,
-          collection_name = settings.params.records;
+      var pageTemplate = '',
+          filteredTemplate = '',
+          options = {
+            elementId: obj.element.id,
+            recordsShown: obj.records.count(),
+            recordsQueryCount: settings.dataset.queryRecordCount,
+            recordsTotal: settings.dataset.totalRecordCount,
+            collectionName: settings.params.records,
+            text: settings.inputs.recordCountText
+          };
 
-      if (recordsShown < recordsQueryCount && settings.features.paginate) {
+      // If currently displayed records are a subset (page) of the entire collection
+      if (options.recordsShown < options.recordsQueryCount && settings.features.paginate) {
         var bounds = obj.records.pageBounds();
-        text += "<span class='dynatable-record-bounds'>" + (bounds[0] + 1) + " to " + bounds[1] + "</span> of ";
-      } else if (recordsShown === recordsQueryCount && settings.features.paginate) {
-        text += recordsShown + " of ";
-      }
-      text += recordsQueryCount + " " + collection_name;
-      if (recordsQueryCount < recordsTotal) {
-        text += " (filtered from " + recordsTotal + " total records)";
+        options.pageLowerBound = bounds[0] + 1;
+        options.pageUpperBound = bounds[1];
+        pageTemplate = settings.inputs.recordCountPageBoundTemplate;
+
+      // Else if currently displayed records are the entire collection
+      } else if (options.recordsShown === options.recordsQueryCount && settings.features.paginate) {
+        pageTemplate = settings.inputs.recordCountPageUnboundedTemplate;
       }
 
-      return $('<span></span>', {
-                id: 'dynatable-record-count-' + obj.element.id,
-                'class': 'dynatable-record-count',
-                html: text
-              });
+      // If collection for table is queried subset of collection
+      if (options.recordsQueryCount < options.recordsTotal) {
+        filteredTemplate = settings.inputs.recordCountFilteredTemplate;
+      }
+
+      // Populate templates with options
+      options.pageTemplate = utility.template(pageTemplate, options);
+      options.filteredTemplate = utility.template(filteredTemplate, options);
+      options.totalTemplate = utility.template(settings.inputs.recordCountTotalTemplate, options);
+      options.textTemplate = utility.template(settings.inputs.recordCountTextTemplate, options);
+
+      return utility.template(settings.inputs.recordCountTemplate, options);
     };
 
     this.attach = function() {
@@ -1644,7 +1663,7 @@
     },
     // Adapted from http://stackoverflow.com/questions/377961/efficient-javascript-string-replacement/378001#378001
     template: function(str, data) {
-      return str.replace(/%(\w*)%/g, function(match, key) {
+      return str.replace(/{(\w*)}/g, function(match, key) {
         return data.hasOwnProperty(key) ? data[key] : "";
       });
     }
