@@ -722,16 +722,19 @@
             text: settings.inputs.recordCountText
           };
 
-      // If currently displayed records are a subset (page) of the entire collection
-      if (options.recordsShown < options.recordsQueryCount && settings.features.paginate) {
-        var bounds = obj.records.pageBounds();
-        options.pageLowerBound = bounds[0] + 1;
-        options.pageUpperBound = bounds[1];
-        pageTemplate = settings.inputs.recordCountPageBoundTemplate;
+      if (settings.features.paginate) {
 
-      // Else if currently displayed records are the entire collection
-      } else if (options.recordsShown === options.recordsQueryCount && settings.features.paginate) {
-        pageTemplate = settings.inputs.recordCountPageUnboundedTemplate;
+        // If currently displayed records are a subset (page) of the entire collection
+        if (options.recordsShown < options.recordsQueryCount) {
+          var bounds = obj.records.pageBounds();
+          options.pageLowerBound = bounds[0] + 1;
+          options.pageUpperBound = bounds[1];
+          pageTemplate = settings.inputs.recordCountPageBoundTemplate;
+
+        // Else if currently displayed records are the entire collection
+        } else if (options.recordsShown === options.recordsQueryCount) {
+          pageTemplate = settings.inputs.recordCountPageUnboundedTemplate;
+        }
       }
 
       // If collection for table is queried subset of collection
