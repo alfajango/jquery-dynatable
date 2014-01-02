@@ -392,13 +392,19 @@
       }
 
       // Query search functionality
-      if (settings.inputs.queries) {
-        settings.inputs.queries.each(function() {
+      if (settings.inputs.queries || settings.features.search) {
+        var allQueries = settings.inputs.queries || $();
+        if (settings.features.search) {
+          allQueries = allQueries.add('#dynatable-query-search-' + obj.element.id);
+        }
+
+        allQueries.each(function() {
           var $this = $(this),
               q = settings.dataset.queries[$this.data('dynatable-query')];
-          $(this).val(q || '');
+          $this.val(q || '');
         });
       }
+
       obj.$element.find(settings.table.bodyRowSelector).remove();
       obj.$element.append(rows);
 
@@ -1197,6 +1203,7 @@
       var $search = $('<input />', {
             type: 'search',
             id: 'dynatable-query-search-' + obj.element.id,
+            'data-dynatable-query': 'search',
             value: settings.dataset.queries.search
           }),
           $searchSpan = $('<span></span>', {
@@ -1533,6 +1540,9 @@
           if (attr == "queries" && data[label]) {
             var queries = settings.inputs.queries || [],
                 inputQueries = $.makeArray(queries.map(function() { return $(this).attr('name') }));
+
+            if (settings.features.search) { inputQueries.push('search'); }
+
             for (var i = 0, len = inputQueries.length; i < len; i++) {
               var attr = inputQueries[i];
               if (data[label][attr]) {
