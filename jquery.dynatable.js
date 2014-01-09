@@ -50,7 +50,8 @@
       pushState: true,
       search: true,
       recordCount: true,
-      perPageSelect: true
+      perPageSelect: true,
+      replicateHeaderAlignment: true
     },
     table: {
       defaultColumnIdStyle: 'camelCase',
@@ -463,7 +464,7 @@
         attributeReader: settings.readers[id] || settings.readers._attributeReader,
         sorts: sorts,
         hidden: $column.css('display') === 'none',
-        textAlign: $column.css('text-align')
+        textAlign: settings.features.replicateHeaderAlignment && $column.css('text-align')
       });
 
       // Modify header cell
