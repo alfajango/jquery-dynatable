@@ -51,7 +51,8 @@
       search: true,
       recordCount: true,
       perPageSelect: true,
-      replicateHeaderAlignment: true
+      replicateHeaderAlignment: true,
+      replicateHeaderClass: false
     },
     table: {
       defaultColumnIdStyle: 'camelCase',
@@ -310,6 +311,10 @@
       td += '"';
     }
 
+    if (column.cssClass) {
+      td += ' class="' + column.cssClass + '"';
+    }
+
     return td + '>' + html + '</td>';
   };
 
@@ -464,7 +469,8 @@
         attributeReader: settings.readers[id] || settings.readers._attributeReader,
         sorts: sorts,
         hidden: $column.css('display') === 'none',
-        textAlign: settings.features.replicateHeaderAlignment && $column.css('text-align')
+        textAlign: settings.features.replicateHeaderAlignment && $column.css('text-align'),
+        cssClass: settings.features.replicateHeaderClass && $column.attr('class')
       });
 
       // Modify header cell
