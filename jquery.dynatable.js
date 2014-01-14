@@ -80,6 +80,7 @@
       paginationGap: [1,2,2,1],
       searchTarget: null,
       searchPlacement: 'before',
+      searchLabel: 'Search: ',
       perPageTarget: null,
       perPagePlacement: 'before',
       perPageText: 'Show: ',
@@ -1231,7 +1232,7 @@
           $searchSpan = $('<span></span>', {
             id: 'dynatable-search-' + obj.element.id,
             'class': 'dynatable-search',
-            text: 'Search: '
+            text: settings.inputs.searchLabel
           }).append($search);
 
       $search
