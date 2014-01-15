@@ -50,16 +50,16 @@
       pushState: true,
       search: true,
       recordCount: true,
-      perPageSelect: true,
-      replicateHeaderAlignment: true,
-      replicateHeaderClass: false
+      perPageSelect: true
     },
     table: {
       defaultColumnIdStyle: 'camelCase',
       columns: null,
       headRowSelector: 'thead tr', // or e.g. tr:first-child
       bodyRowSelector: 'tbody tr',
-      headRowClass: null
+      headRowClass: null,
+      copyHeaderAlignment: true,
+      copyHeaderClass: false
     },
     inputs: {
       queries: null,
@@ -469,8 +469,8 @@
         attributeReader: settings.readers[id] || settings.readers._attributeReader,
         sorts: sorts,
         hidden: $column.css('display') === 'none',
-        textAlign: settings.features.replicateHeaderAlignment && $column.css('text-align'),
-        cssClass: settings.features.replicateHeaderClass && $column.attr('class')
+        textAlign: settings.table.copyHeaderAlignment && $column.css('text-align'),
+        cssClass: settings.table.copyHeaderClass && $column.attr('class')
       });
 
       // Modify header cell
