@@ -901,6 +901,7 @@
       var sortsKeys = settings.dataset.sortsKeys,
           index = $.inArray(attr, sortsKeys);
       settings.dataset.sorts[attr] = direction;
+      obj.$element.trigger('dynatable:sorts:added', [attr, direction]);
       if (index === -1) { sortsKeys.push(attr); }
       return dt;
     };
@@ -909,6 +910,7 @@
       var sortsKeys = settings.dataset.sortsKeys,
           index = $.inArray(attr, sortsKeys);
       delete settings.dataset.sorts[attr];
+      obj.$element.trigger('dynatable:sorts:removed', attr);
       if (index !== -1) { sortsKeys.splice(index, 1); }
       return dt;
     };
@@ -916,6 +918,7 @@
     this.clear = function() {
       settings.dataset.sorts = {};
       settings.dataset.sortsKeys.length = 0;
+      obj.$element.trigger('dynatable:sorts:cleared');
     };
 
     // Try to intelligently guess which sort function to use
@@ -1110,11 +1113,13 @@
         settings.dataset.page = 1;
       }
       settings.dataset.queries[name] = value;
+      obj.$element.trigger('dynatable:queries:added', [name, value]);
       return dt;
     };
 
     this.remove = function(name) {
       delete settings.dataset.queries[name];
+      obj.$element.trigger('dynatable:queries:removed', name);
       return dt;
     };
 
@@ -1273,7 +1278,9 @@
     };
 
     this.set = function(page) {
-      settings.dataset.page = parseInt(page, 10);
+      var newPage = parseInt(page, 10);
+      settings.dataset.page = newPage;
+      obj.$element.trigger('dynatable:page:set', newPage);
     }
   };
 
@@ -1331,8 +1338,10 @@
     };
 
     this.set = function(number, skipResetPage) {
+      var newPerPage = parseInt(number);
       if (!skipResetPage) { obj.paginationPage.set(1); }
-      settings.dataset.perPage = parseInt(number);
+      settings.dataset.perPage = newPerPage;
+      obj.$element.trigger('dynatable:perPage:set', newPerPage);
     };
   };
 
