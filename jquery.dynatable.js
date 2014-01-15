@@ -90,7 +90,8 @@
       recordCountText: 'Showing',
       recordCountTextTemplate: '{text} {pageTemplate} {totalTemplate} {filteredTemplate}',
       recordCountTemplate: '<span id="dynatable-record-count-{elementId}" class="dynatable-record-count">{textTemplate}</span>',
-      processingText: 'Processing...'
+      processingText: 'Processing...',
+      searchFieldText: 'Search: '
     },
     dataset: {
       ajax: false,
@@ -1231,7 +1232,7 @@
           $searchSpan = $('<span></span>', {
             id: 'dynatable-search-' + obj.element.id,
             'class': 'dynatable-search',
-            text: 'Search: '
+            text: settings.inputs.searchFieldText
           }).append($search);
 
       $search
