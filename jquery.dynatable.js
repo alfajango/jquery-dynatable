@@ -1595,7 +1595,7 @@
           }
         }
       }
-      return decodeURI($.param(urlOptions));
+      return $.param(urlOptions);
     },
     // Get array of keys from object
     // see http://stackoverflow.com/questions/208016/how-to-list-the-properties-of-a-javascript-object/208020#208020
