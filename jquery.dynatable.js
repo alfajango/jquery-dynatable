@@ -80,6 +80,7 @@
       paginationGap: [1,2,2,1],
       searchTarget: null,
       searchPlacement: 'before',
+      searchText: 'Search: ',
       perPageTarget: null,
       perPagePlacement: 'before',
       perPageText: 'Show: ',
@@ -90,8 +91,7 @@
       recordCountText: 'Showing',
       recordCountTextTemplate: '{text} {pageTemplate} {totalTemplate} {filteredTemplate}',
       recordCountTemplate: '<span id="dynatable-record-count-{elementId}" class="dynatable-record-count">{textTemplate}</span>',
-      processingText: 'Processing...',
-      searchFieldText: 'Search: '
+      processingText: 'Processing...'
     },
     dataset: {
       ajax: false,
@@ -1232,7 +1232,7 @@
           $searchSpan = $('<span></span>', {
             id: 'dynatable-search-' + obj.element.id,
             'class': 'dynatable-search',
-            text: settings.inputs.searchFieldText
+            text: settings.inputs.searchText
           }).append($search);
 
       $search
