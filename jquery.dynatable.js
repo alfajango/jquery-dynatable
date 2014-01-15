@@ -718,7 +718,7 @@
             recordsShown: obj.records.count(),
             recordsQueryCount: settings.dataset.queryRecordCount,
             recordsTotal: settings.dataset.totalRecordCount,
-            collectionName: settings.params.records,
+            collectionName: settings.params.records === "_root" ? "records" : settings.params.records,
             text: settings.inputs.recordCountText
           };
 
