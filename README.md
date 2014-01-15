@@ -20,7 +20,7 @@ To install Dynatable:
 
 ## Support
 
-IRC: [Join us at #dynatable on freenode IRC](http://webchat.freenode.net/?channels=dynatable)
+IRC: [Join us at #dynatable on freenode IRC](https://webchat.freenode.net/?channels=dynatable)
 
 Bugs and Feature Requests: [Search and open a Github Issue](https://github.com/alfajango/jquery-dynatable/issues)
 
