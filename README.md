@@ -18,6 +18,17 @@ To install Dynatable:
 
 * [Download the latest release](http://jspkg.com/packages/dynatable)
 
+## Support
+
+IRC: [Join us at #dynatable on freenode IRC](irc://chat.freenode.net/dynatable)
+
+Bugs and Feature Requests: [Search and open a Github Issue](https://github.com/alfajango/jquery-dynatable/issues)
+
+Debugging: [Fork and edit this template on JSFiddle](http://jsfiddle.net/ty3b7/)
+
+Questions: [Ask a question tagged with dynatable on
+StackOverflow](http://stackoverflow.com/questions/tagged/dynatable)
+
 ## TODO:
 
 * ~~Change `unfilter`s and `filter`s to `reader`s and `writer`s.~~
