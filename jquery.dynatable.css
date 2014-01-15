@@ -23,6 +23,17 @@ th a:hover {
   float: right;
   margin-bottom: 10px;
 }
+.dynatable-search-clear {
+  display: none;
+  position: absolute;
+  margin-left: -1.5em;
+  margin-top: 0.35em;
+  color: #9e9e9e;
+  cursor: pointer;
+}
+.dynatable-search-with-clear .dynatable-search-clear {
+  display: inline-block;
+}
 
 .dynatable-pagination-links {
   float: right;

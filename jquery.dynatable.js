@@ -80,6 +80,7 @@
       paginationGap: [1,2,2,1],
       searchTarget: null,
       searchPlacement: 'before',
+      searchPlaceholder: 'Search',
       perPageTarget: null,
       perPagePlacement: 'before',
       perPageText: 'Show: ',
@@ -1224,19 +1225,41 @@
     this.create = function() {
       var $search = $('<input />', {
             type: 'search',
+            placeholder: settings.inputs.searchPlaceholder,
             id: 'dynatable-query-search-' + obj.element.id,
             'data-dynatable-query': 'search',
             value: settings.dataset.queries.search
+          }),
+          $searchCancel = $('<span></span>', {
+            'class': 'dynatable-search-clear',
+            html: '&#x2716;'
           }),
           $searchSpan = $('<span></span>', {
             id: 'dynatable-search-' + obj.element.id,
             'class': 'dynatable-search',
             text: 'Search: '
-          }).append($search);
+          }).append($search).append($searchCancel);
+
+      if ($search.val() !== "") {
+        $searchSpan.addClass('dynatable-search-with-clear');
+      }
+
+      $searchCancel.bind('click', function(e) {
+        $search.val('').focus();
+        obj.queries.runSearch('');
+        $searchSpan.removeClass('dynatable-search-with-clear');
+      });
 
       $search
         .bind(settings.inputs.queryEvent, function() {
           obj.queries.runSearch($(this).val());
+        })
+        .bind('keyup', function(e) {
+          if ($search.val()==="") {
+            $searchSpan.removeClass('dynatable-search-with-clear');
+          } else {
+            $searchSpan.addClass('dynatable-search-with-clear');
+          }
         })
         .bind('keypress', function(e) {
           if (e.which == 13) {
