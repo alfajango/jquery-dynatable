@@ -278,6 +278,8 @@
         this.state.push(data);
       }
     }
+
+    this.$element.addClass('dynatable-processed');
     this.$element.trigger('dynatable:afterProcess', data);
   };
 
