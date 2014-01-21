@@ -86,6 +86,7 @@
       perPageTarget: null,
       perPagePlacement: 'before',
       perPageText: 'Show: ',
+      pageText: 'Pages: ',
       recordCountPageBoundTemplate: '{pageLowerBound} to {pageUpperBound} of',
       recordCountPageUnboundedTemplate: '{recordsShown} of',
       recordCountTotalTemplate: '{recordsQueryCount} {collectionName}',
@@ -1378,7 +1379,7 @@
             (pages + 1) - settings.inputs.paginationGap[3]
           ];
 
-      pageLinks += '<li><span>Pages: </span></li>';
+      pageLinks += '<li><span>' + settings.inputs.pageText + '</span></li>';
 
       for (var i = 1; i <= pages; i++) {
         if ( (i > breaks[0] && i < breaks[1]) || (i > breaks[2] && i < breaks[3])) {
