@@ -110,7 +110,7 @@
       perPageDefault: 10,
       perPageOptions: [10,20,50,100],
       sorts: {},
-      sortsKeys: null,
+      sortsKeys: [],
       sortTypes: {},
       records: null
     },
@@ -200,7 +200,7 @@
 
     this.$element.trigger('dynatable:init', this);
 
-    if (!this.settings.dataset.ajax || (this.settings.dataset.ajax && this.settings.dataset.ajaxOnLoad) || this.settings.features.paginate) {
+    if (!this.settings.dataset.ajax || (this.settings.dataset.ajax && this.settings.dataset.ajaxOnLoad) || this.settings.features.paginate || (this.settings.features.sort && !$.isEmptyObject(this.settings.dataset.sorts))) {
       this.process();
     }
   };
@@ -901,8 +901,12 @@
 
     this.init = function() {
       var sortsUrl = window.location.search.match(new RegExp(settings.params.sorts + '[^&=]*=[^&]*', 'g'));
-      settings.dataset.sorts = sortsUrl ? utility.deserialize(sortsUrl)[settings.params.sorts] : {};
-      settings.dataset.sortsKeys = sortsUrl ? utility.keysFromObject(settings.dataset.sorts) : [];
+      if (sortsUrl) {
+        settings.dataset.sorts = utility.deserialize(sortsUrl)[settings.params.sorts];
+      }
+      if (!settings.dataset.sortsKeys.length) {
+        settings.dataset.sortsKeys = utility.keysFromObject(settings.dataset.sorts);
+      }
     };
 
     this.add = function(attr, direction) {
