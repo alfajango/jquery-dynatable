@@ -280,7 +280,7 @@
       }
     }
 
-    this.$element.addClass('dynatable-processed');
+    this.$element.addClass('dynatable-loaded');
     this.$element.trigger('dynatable:afterProcess', data);
   };
 
