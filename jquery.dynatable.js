@@ -363,7 +363,8 @@
       var rows = '',
           columns = settings.table.columns,
           rowWriter = settings.writers._rowWriter,
-          cellWriter = settings.writers._cellWriter;
+          cellWriter = settings.writers._cellWriter,
+          $tbody;
 
       obj.$element.trigger('dynatable:beforeUpdate', rows);
 
@@ -420,7 +421,11 @@
       }
 
       obj.$element.find(settings.table.bodyRowSelector).remove();
-      obj.$element.append(rows);
+      if (obj.$element.is('table') && ($tbody = obj.$element.find('tbody')).length) {
+        $tbody.append(rows);
+      } else {
+        obj.$element.append(rows);
+      }
 
       obj.$element.trigger('dynatable:afterUpdate', rows);
     };
