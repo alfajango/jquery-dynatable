@@ -86,6 +86,7 @@
       perPageTarget: null,
       perPagePlacement: 'before',
       perPageText: 'Show: ',
+      pageText: 'Pages: ',
       recordCountPageBoundTemplate: '{pageLowerBound} to {pageUpperBound} of',
       recordCountPageUnboundedTemplate: '{recordsShown} of',
       recordCountTotalTemplate: '{recordsQueryCount} {collectionName}',
@@ -109,7 +110,7 @@
       perPageDefault: 10,
       perPageOptions: [10,20,50,100],
       sorts: {},
-      sortsKeys: null,
+      sortsKeys: [],
       sortTypes: {},
       records: null
     },
@@ -199,7 +200,7 @@
 
     this.$element.trigger('dynatable:init', this);
 
-    if (!this.settings.dataset.ajax || (this.settings.dataset.ajax && this.settings.dataset.ajaxOnLoad) || this.settings.features.paginate) {
+    if (!this.settings.dataset.ajax || (this.settings.dataset.ajax && this.settings.dataset.ajaxOnLoad) || this.settings.features.paginate || (this.settings.features.sort && !$.isEmptyObject(this.settings.dataset.sorts))) {
       this.process();
     }
   };
@@ -902,8 +903,12 @@
 
     this.init = function() {
       var sortsUrl = window.location.search.match(new RegExp(settings.params.sorts + '[^&=]*=[^&]*', 'g'));
-      settings.dataset.sorts = sortsUrl ? utility.deserialize(sortsUrl)[settings.params.sorts] : {};
-      settings.dataset.sortsKeys = sortsUrl ? utility.keysFromObject(settings.dataset.sorts) : [];
+      if (sortsUrl) {
+        settings.dataset.sorts = utility.deserialize(sortsUrl)[settings.params.sorts];
+      }
+      if (!settings.dataset.sortsKeys.length) {
+        settings.dataset.sortsKeys = utility.keysFromObject(settings.dataset.sorts);
+      }
     };
 
     this.add = function(attr, direction) {
@@ -1380,7 +1385,7 @@
             (pages + 1) - settings.inputs.paginationGap[3]
           ];
 
-      pageLinks += '<li><span>Pages: </span></li>';
+      pageLinks += '<li><span>' + settings.inputs.pageText + '</span></li>';
 
       for (var i = 1; i <= pages; i++) {
         if ( (i > breaks[0] && i < breaks[1]) || (i > breaks[2] && i < breaks[3])) {
