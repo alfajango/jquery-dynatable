@@ -1248,7 +1248,7 @@
             'data-dynatable-query': 'search',
             value: settings.dataset.queries.search
           }),
-          $searchSpan = $('<span></span>', {
+          $searchLabel = $('<label></label>', {
             id: 'dynatable-search-' + obj.element.id,
             'class': 'dynatable-search',
             text: settings.inputs.searchText
@@ -1264,7 +1264,7 @@
             e.preventDefault();
           }
         });
-      return $searchSpan;
+      return $searchLabel;
     };
 
     this.attach = function() {
