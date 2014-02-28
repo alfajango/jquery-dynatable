@@ -1137,6 +1137,12 @@
       return dt;
     };
 
+    this.clear = function() {
+      settings.dataset.queries = {};
+      // not sure what the event arg should be if I trigger teh :removed event
+      return dt;
+    }
+
     this.run = function() {
       for (query in settings.dataset.queries) {
         if (settings.dataset.queries.hasOwnProperty(query)) {
