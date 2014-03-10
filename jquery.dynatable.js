@@ -854,45 +854,33 @@
 
       obj.$element.trigger('dynatable:push', data);
 
-      cache = { dynatable: { dataset: settings.dataset } };
+      // add things which could be changed by the push to this object
+      cache = {
+        dynatable: {
+          dataset: {
+            page: settings.dataset.page,
+            perPage: settings.dataset.perPage,
+            queries: settings.dataset.queries,
+            sorts: settings.dataset.sorts,
+            sortsKeys: settings.dataset.sortsKeys
+          }
+        }
+      };
+
       if (!firstPush) { cache.dynatable.scrollTop = $(window).scrollTop(); }
-      cacheStr = JSON.stringify(cache);
 
-      // Mozilla has a 640k char limit on what can be stored in pushState.
-      // See "limit" in https://developer.mozilla.org/en/DOM/Manipulating_the_browser_history#The_pushState().C2.A0method
-      // and "dataStr.length" in http://wine.git.sourceforge.net/git/gitweb.cgi?p=wine/wine-gecko;a=patch;h=43a11bdddc5fc1ff102278a120be66a7b90afe28
-      //
-      // Likewise, other browsers may have varying (undocumented) limits.
-      // Also, Firefox's limit can be changed in about:config as browser.history.maxStateObjectSize
-      // Since we don't know what the actual limit will be in any given situation, we'll just try caching and rescue
-      // any exceptions by retrying pushState without caching the records.
-      //
-      // I have absolutely no idea why perPageOptions suddenly becomes an array-like object instead of an array,
-      // but just recently, this started throwing an error if I don't convert it:
-      // 'Uncaught Error: DATA_CLONE_ERR: DOM Exception 25'
-      cache.dynatable.dataset.perPageOptions = $.makeArray(cache.dynatable.dataset.perPageOptions);
-
-      try {
-        window.history[pushFunction](cache, "Dynatable state", path + params + hash);
-      } catch(error) {
-        // Make cached records = null, so that `pop` will rerun process to retrieve records
-        cache.dynatable.dataset.records = null;
-        window.history[pushFunction](cache, "Dynatable state", path + params + hash);
-      }
+      window.history[pushFunction](cache, "Dynatable state", path + params + hash);
     };
 
     this.pop = function(event) {
       var data = event.state.dynatable;
-      settings.dataset = data.dataset;
+      $.extend(settings.dataset, data.dataset);
+
+      obj.$element.trigger('dynatable:pop', obj);
 
       if (data.scrollTop) { $(window).scrollTop(data.scrollTop); }
 
-      // If dataset.records is cached from pushState
-      if ( data.dataset.records ) {
-        obj.dom.update();
-      } else {
-        obj.process(true);
-      }
+      obj.process(true);
     };
   };
 
