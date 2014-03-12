@@ -818,6 +818,10 @@
   };
 
   function State(obj, settings) {
+    // to prevent duplicate history entries when navigating back to 
+    // a page using dynatable, use replaceState for the first push
+    this.firstPush = true;
+
     this.initOnLoad = function() {
       // Check if pushState option is true, and if browser supports it
       return settings.features.pushState && history.pushState;
@@ -837,12 +841,16 @@
           path,
           params,
           hash,
-          newParams,
-          cacheStr,
           cache,
-          // replaceState on initial load, then pushState after that
-          firstPush = !(window.history.state && window.history.state.dynatable),
-          pushFunction = firstPush ? 'replaceState' : 'pushState';
+          pushFunction;
+
+      // replaceState on initial load, then pushState after that
+      if (this.firstPush) {
+        pushFunction = 'replaceState';
+        this.firstPush = false;
+      } else {
+        pushFunction = 'pushState';
+      }
 
       if (urlString && /^\?/.test(urlString)) { urlString = urlString.substring(1); }
       $.extend(urlOptions, data);
@@ -867,7 +875,7 @@
         }
       };
 
-      if (!firstPush) { cache.dynatable.scrollTop = $(window).scrollTop(); }
+      if (!this.firstPush) { cache.dynatable.scrollTop = $(window).scrollTop(); }
 
       window.history[pushFunction](cache, "Dynatable state", path + params + hash);
     };
