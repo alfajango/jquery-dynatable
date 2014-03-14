@@ -643,7 +643,11 @@
         return comparison;
       }
 
-      return sort.call(settings.dataset.records, sortFunction);
+      if (sortsKeys.length > 0 || !$.isEmptyObject(sorts)) {
+        return sort.call(settings.dataset.records, sortFunction);
+      } else {
+        return settings.dataset.records;
+      }
     };
 
     this.paginate = function() {
