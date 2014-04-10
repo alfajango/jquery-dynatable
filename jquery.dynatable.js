@@ -49,6 +49,8 @@
       sort: true,
       pushState: true,
       search: true,
+      // if true only visible fields will be search (defaults to searching all fields)
+      onlySearchVisibleFields: false,
       recordCount: true,
       perPageSelect: true
     },
@@ -1211,12 +1213,27 @@
     // and output true of false as to whether the record is a match or not
     this.functions = {
       search: function(record, queryValue) {
+        var filterBy = true; // search all attributes by default
         var contains = false;
         // Loop through each attribute of record
         for (attr in record) {
           if (record.hasOwnProperty(attr)) {
             var attrValue = record[attr];
-            if (typeof(attrValue) === "string" && attrValue.toLowerCase().indexOf(queryValue.toLowerCase()) !== -1) {
+
+            if (settings.features.onlySearchVisibleFields) {
+              filterBy = false; // default to false
+
+              // check whether the attribute is a visible column
+              for (var i = 0; i < settings.table.columns.length; i++) {
+                if (attr === settings.table.columns[i].id) {
+                  // the attribute is visible
+                  filterBy = true;
+                  break;
+                }
+              }
+            }
+
+            if (filterBy && typeof(attrValue) === "string" && attrValue.toLowerCase().indexOf(queryValue.toLowerCase()) !== -1) {
               contains = true;
               // Don't need to keep searching attributes once found
               break;
