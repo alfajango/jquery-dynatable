@@ -1594,7 +1594,7 @@
               if (data[label][attr]) {
                 if (typeof urlOptions[label] === 'undefined') { urlOptions[label] = {}; }
                 urlOptions[label][attr] = data[label][attr];
-              } else {
+              } else if(urlOptions[label]) {
                 delete urlOptions[label][attr];
               }
             }
