@@ -653,7 +653,7 @@
     };
 
     this.resetOriginal = function() {
-      settings.dataset.records = settings.dataset.originalRecords || [];
+      settings.dataset.records = $.extend(true, [], settings.dataset.originalRecords) || [];
     };
 
     this.pageBounds = function() {
