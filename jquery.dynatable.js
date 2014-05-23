@@ -644,9 +644,7 @@
       }
 
       if (sortsKeys.length > 0 || !$.isEmptyObject(sorts)) {
-        return sort.call(settings.dataset.records, sortFunction);
-      } else {
-        return settings.dataset.records;
+        sort.call(settings.dataset.records, sortFunction);
       }
     };
 
