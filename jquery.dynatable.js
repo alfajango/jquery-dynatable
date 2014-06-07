@@ -595,7 +595,6 @@
       // Create cache of original full recordset (unpaginated and unqueried)
       settings.dataset.originalRecords = $.extend(true, [], settings.dataset.records);
     };
-    console.log(obj)
     this.ajaxSuccess = obj.settings.ajax.ajaxSuccess
     this.ajaxDone = obj.settings.ajax.ajaxDone
 
