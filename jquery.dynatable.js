@@ -114,6 +114,23 @@
       sortTypes: {},
       records: null
     },
+    ajax: {
+      ajaxComplete: function(response) {
+        this.$element.trigger('dynatable:ajax:success', response);
+        // Merge ajax results and meta-data into dynatables cached data
+        this.records.updateFromJson(response);
+        // update table with new records
+        this.dom.update();
+
+        if (obj.skipPushState && obj.state.initOnLoad()) {
+          obj.state.push(data);
+        }
+      },
+
+      ajaxDone: function() {
+        obj.processingIndicator.hide();
+        }
+     },
     writers: {
       _rowWriter: defaultRowWriter,
       _cellWriter: defaultCellWriter,
@@ -207,7 +224,6 @@
 
   processAll = function(skipPushState) {
     var data = {};
-
     this.$element.trigger('dynatable:beforeProcess', data);
 
     if (!$.isEmptyObject(this.settings.dataset.queries)) { data[this.settings.params.queries] = this.settings.dataset.queries; }
@@ -232,22 +248,9 @@
         type: _this.settings.dataset.ajaxMethod,
         dataType: _this.settings.dataset.ajaxDataType,
         data: data,
-        error: function(xhr, error) {
-        },
-        success: function(response) {
-          _this.$element.trigger('dynatable:ajax:success', response);
-          // Merge ajax results and meta-data into dynatables cached data
-          _this.records.updateFromJson(response);
-          // update table with new records
-          _this.dom.update();
-
-          if (!skipPushState && _this.state.initOnLoad()) {
-            _this.state.push(data);
-          }
-        },
-        complete: function() {
-          _this.processingIndicator.hide();
-        }
+        error: function(xhr, error) { },
+        success: _this.settings.ajax.ajaxSuccess,
+        complete: _this.settings.ajax.ajaxDone
       };
       // Do not pass url to `ajax` options if blank
       if (this.settings.dataset.ajaxUrl) {
@@ -592,6 +595,9 @@
       // Create cache of original full recordset (unpaginated and unqueried)
       settings.dataset.originalRecords = $.extend(true, [], settings.dataset.records);
     };
+    console.log(obj)
+    this.ajaxSuccess = obj.settings.ajax.ajaxSuccess
+    this.ajaxDone = obj.settings.ajax.ajaxDone
 
     // merge ajax response json with cached data including
     // meta-data and records
