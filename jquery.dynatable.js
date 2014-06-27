@@ -233,6 +233,7 @@
         dataType: _this.settings.dataset.ajaxDataType,
         data: data,
         error: function(xhr, error) {
+          _this.$element.trigger('dynatable:ajax:error', {xhr: xhr, error : error});
         },
         success: function(response) {
           _this.$element.trigger('dynatable:ajax:success', response);
