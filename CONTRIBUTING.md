@@ -6,6 +6,9 @@ GNU Affero General Public License (AGPL).
 Contributors agree that any contributions are owned by the copyright holder
 and that contributors have absolutely no rights to their contributions.
 
+To get started, [sign the Contributor License
+Agreement](https://www.clahub.com/agreements/alfajango/jquery-dynatable).
+
 ## Tests
 
 Currently the testing process consists of opening [the Dynatable
