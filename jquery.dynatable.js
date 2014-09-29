@@ -259,7 +259,11 @@
       // that may have been in URL when page loaded, so that it doesn't conflict with
       // what's passed in with the data ajax parameter
       } else {
-        options.url = utility.refreshQueryString(window.location.href, {}, this.settings);
+        var ajaxUrl = utility.refreshQueryString(window.location.href, {}, this.settings);
+        if (ajaxUrl.length > 0) {
+          ajaxUrl = '?' + ajaxUrl;
+        }
+        options.url = ajaxUrl;
       }
       if (this.settings.dataset.ajaxCache !== null) { options.cache = this.settings.dataset.ajaxCache; }
 
@@ -1548,10 +1552,7 @@
     refreshQueryString: function(urlString, data, settings) {
       var _this = this,
           queryString = urlString.split('?'),
-          path = queryString.shift(),
-          urlOptions;
-
-      urlOptions = this.deserialize(urlString);
+          urlOptions = this.deserialize(queryString);
 
       // Loop through each dynatable param and update the URL with it
       for (attr in settings.params) {
