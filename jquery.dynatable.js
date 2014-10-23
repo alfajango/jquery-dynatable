@@ -315,6 +315,11 @@
 
       td += '"';
     }
+    
+    // allow cells to be editable
+    if (column.contentEditable) {
+      td += ' contenteditable="true"';
+    }
 
     if (column.cssClass) {
       td += ' class="' + column.cssClass + '"';
