@@ -609,7 +609,7 @@
           records[i] = records[i][settings.params.record];
         }
       }
-      if (settings.params.queryRecordCount in data) {
+      if ((settings.dataset.page === 1) && (settings.params.queryRecordCount in data)) {
         settings.dataset.queryRecordCount = data[settings.params.queryRecordCount];
       }
       if (settings.params.totalRecordCount in data) {
