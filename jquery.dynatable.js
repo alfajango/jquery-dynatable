@@ -857,6 +857,7 @@
 
       cache = { dynatable: { dataset: settings.dataset } };
       if (!firstPush) { cache.dynatable.scrollTop = $(window).scrollTop(); }
+      $.extend(cache, window.history.state);
       cacheStr = JSON.stringify(cache);
 
       // Mozilla has a 640k char limit on what can be stored in pushState.
