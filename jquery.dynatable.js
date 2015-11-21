@@ -316,6 +316,10 @@
       td += '"';
     }
 
+    if (column.dataDynatableContenteditable) {
+      td += ' contenteditable="true"';
+    }
+
     if (column.cssClass) {
       td += ' class="' + column.cssClass + '"';
     }
