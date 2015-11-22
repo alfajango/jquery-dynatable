@@ -1121,9 +1121,9 @@
       }
     };
 
-    this.add = function(name, value, noPageReset) {
-      // only reset the page if noPageReset is not enabled and the filter is not already applied
-      if (settings.features.paginate && !noPageReset && (!settings.dataset.queries[name] || settings.dataset.queries[name] != value)) {
+    this.add = function(name, value, skipPageReset) {
+      // only reset the page if skipPageReset is not enabled and the filter is not already applied
+      if (settings.features.paginate && !skipPageReset && (!settings.dataset.queries[name] || settings.dataset.queries[name] !== value)) {
         settings.dataset.page = 1;
       }
       settings.dataset.queries[name] = value;
