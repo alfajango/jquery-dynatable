@@ -675,6 +675,7 @@
       tableRecords.each(function(index){
         var record = {};
         record['dynatable-original-index'] = index;
+        record["originalTR"] = $(this);
         $(this).find('th,td').each(function(index) {
           if (columns[index] === undefined) {
             // Header cell didn't exist for this column, so let's generate and append
