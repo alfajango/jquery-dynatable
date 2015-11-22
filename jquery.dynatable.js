@@ -1256,7 +1256,7 @@
           }).append($search);
 
       if (settings.inputs.searchAutofocus) {
-        $($search).attr('autofocus', 'autofocus');
+        $search.prop('autofocus', true);
       }
       
       $search
