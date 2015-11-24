@@ -1137,7 +1137,13 @@
       obj.$element.trigger('dynatable:queries:removed', name);
       return dt;
     };
-
+    this.clear = function(){
+    //remove each query in settings.dataset
+      for (var q in settings.dataset.queries) {
+         this.remove(q);
+      }
+      return dt;
+    };
     this.run = function() {
       for (query in settings.dataset.queries) {
         if (settings.dataset.queries.hasOwnProperty(query)) {
