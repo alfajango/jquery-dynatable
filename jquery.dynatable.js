@@ -232,6 +232,13 @@
         type: _this.settings.dataset.ajaxMethod,
         dataType: _this.settings.dataset.ajaxDataType,
         data: data,
+        beforeSend: function(request){
+        	var token = $("meta[name='_csrf']").attr("content");
+        	if (!token) token = "";
+        	var header = $("meta[name='_csrf_header']").attr("content");
+        	if (!header) header = "";
+            request.setRequestHeader(header, token);
+        },
         error: function(xhr, error) {
           _this.$element.trigger('dynatable:ajax:error', {xhr: xhr, error : error});
         },
