@@ -326,7 +326,7 @@
   function defaultAttributeWriter(record) {
     // `this` is the column object in settings.columns
     // TODO: automatically convert common types, such as arrays and objects, to string
-    return record[this.id];
+    return record[this.id] || '';
   };
 
   function defaultAttributeReader(cell, record) {
@@ -958,8 +958,8 @@
         return a[attr] === b[attr] ? 0 : (direction > 0 ? a[attr] - b[attr] : b[attr] - a[attr]);
       },
       string: function(a, b, attr, direction) {
-        var aAttr = (a['dynatable-sortable-text'] && a['dynatable-sortable-text'][attr]) ? a['dynatable-sortable-text'][attr] : a[attr],
-            bAttr = (b['dynatable-sortable-text'] && b['dynatable-sortable-text'][attr]) ? b['dynatable-sortable-text'][attr] : b[attr],
+        var aAttr = ((a['dynatable-sortable-text'] && a['dynatable-sortable-text'][attr]) ? a['dynatable-sortable-text'][attr] : a[attr]) || '',
+            bAttr = ((b['dynatable-sortable-text'] && b['dynatable-sortable-text'][attr]) ? b['dynatable-sortable-text'][attr] : b[attr]) || '',
             comparison;
         aAttr = aAttr.toLowerCase();
         bAttr = bAttr.toLowerCase();
