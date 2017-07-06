@@ -32,12 +32,13 @@ describe('Normalization', () => {
     $("#dynatable-spec").html(table)
   })
 
-  afterAll(() => {
+  afterEach(() => {
     $("#dynatable-spec").html("")
   })
 
-  it('should create table JSON representation', () => {
+  it("should create table JSON representation", () => {
     $("#my-table").dynatable()
+
     expect(window.history.state.dynatable.dataset.records).toEqual(
       [
         {
@@ -61,4 +62,65 @@ describe('Normalization', () => {
       ]
     )
   });
-});
+
+  it("should convert attribute names to camelCase", () => {
+    $("#my-table").dynatable({
+      table: { defaultColumnIdStyle: "camelCase" }
+    })
+
+    let records = window.history.state.dynatable.dataset.records
+
+    expect(records[0].favoriteMusic).toEqual("Disco")
+    expect(records[1].favoriteMusic).toEqual("Alternative")
+    expect(records[2].favoriteMusic).toEqual("Classical")
+  })
+
+
+  it("should convert attribute names to trim dash", () => {
+    $("#my-table").dynatable({
+      table: { defaultColumnIdStyle: "trimDash" }
+    })
+
+    let records = window.history.state.dynatable.dataset.records
+
+    expect(records[0]["Favorite-Music"]).toEqual("Disco")
+    expect(records[1]["Favorite-Music"]).toEqual("Alternative")
+    expect(records[2]["Favorite-Music"]).toEqual("Classical")
+  })
+
+  it("should convert attribute names to dashed", () => {
+    $("#my-table").dynatable({
+      table: { defaultColumnIdStyle: "dashed" }
+    })
+
+    let records = window.history.state.dynatable.dataset.records
+
+    expect(records[0]["favorite-music"]).toEqual("Disco")
+    expect(records[1]["favorite-music"]).toEqual("Alternative")
+    expect(records[2]["favorite-music"]).toEqual("Classical")
+  })
+
+  it("should convert attribute names to underscore", () => {
+    $("#my-table").dynatable({
+      table: { defaultColumnIdStyle: "underscore" }
+    })
+
+    let records = window.history.state.dynatable.dataset.records
+
+    expect(records[0]["favorite_music"]).toEqual("Disco")
+    expect(records[1]["favorite_music"]).toEqual("Alternative")
+    expect(records[2]["favorite_music"]).toEqual("Classical")
+  })
+
+  it("should convert attribute names to lowercase", () => {
+    $("#my-table").dynatable({
+      table: { defaultColumnIdStyle: "lowercase" }
+    })
+
+    let records = window.history.state.dynatable.dataset.records
+
+    expect(records[0]["favorite music"]).toEqual("Disco")
+    expect(records[1]["favorite music"]).toEqual("Alternative")
+    expect(records[2]["favorite music"]).toEqual("Classical")
+  })
+})
