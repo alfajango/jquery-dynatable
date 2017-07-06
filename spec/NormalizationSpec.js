@@ -166,4 +166,16 @@ describe('Normalization', () => {
       }
     ])
   })
+
+  it("should allow data-dynatable-column attribute override", () => {
+    $("#my-table th:first-child").attr("data-dynatable-column", "somename")
+
+    $("#my-table").dynatable()
+
+    let records = window.history.state.dynatable.dataset.records
+
+    expect(records[0]["somename"]).toEqual("Fred")
+    expect(records[1]["somename"]).toEqual("Helen")
+    expect(records[2]["somename"]).toEqual("Glen")
+  })
 })
