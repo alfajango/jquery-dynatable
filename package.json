@@ -22,13 +22,14 @@
     }
   ],
   "dependencies": {
-    "jquery": "1.6"
+    "jasmine": "2.6.0",
+    "jquery": "^1.6.3"
   },
   "bugs": {
     "mail": "support@alfajango.com",
     "web": "https://github.com/alfajango/jquery-dynatable/issues"
   },
-  "repositories"	: [
+  "repositories": [
     {
       "type": "git",
       "url": "https://github.com/alfajango/jquery-dynatable.git"
