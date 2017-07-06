@@ -178,4 +178,37 @@ describe('Normalization', () => {
     expect(records[1]["somename"]).toEqual("Helen")
     expect(records[2]["somename"]).toEqual("Glen")
   })
+
+  it("should render table from existing JSON", () => {
+
+    let json = "<pre id='json-records'>" +
+      JSON.stringify([
+        { "band": "Weezer", "song": "El Scorcho" },
+        { "band": "Chevelle", "song": "Family System" }
+      ]) + "</pre>"
+
+    $("#dynatable-spec").append(json)
+
+    let $records = $('#json-records'),
+      myRecords = JSON.parse($records.text())
+
+    $('#my-table').dynatable({
+      dataset: { records: myRecords }
+    });
+
+    let records = window.history.state.dynatable.dataset.records
+
+    expect(records).toEqual(
+      [
+        {
+          "band": "Weezer",
+          "song": "El Scorcho"
+        },
+        {
+          "band": "Chevelle",
+          "song": "Family System"
+        }
+      ]
+    )
+  })
 })
