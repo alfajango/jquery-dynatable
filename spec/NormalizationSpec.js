@@ -123,4 +123,47 @@ describe('Normalization', () => {
     expect(records[1]["favorite music"]).toEqual("Alternative")
     expect(records[2]["favorite music"]).toEqual("Classical")
   })
+
+  it("should allow custom attribute format function", () => {
+    $('#my-table').bind('dynatable:preinit', function(e, dynatable) {
+      dynatable.utility.textTransform.myNewStyle = function(text) {
+        return text
+          .replace(/\s+/, '_')
+          .replace(/[A-Z]/, function($1){ return $1 + $1 });
+      };
+    }).dynatable({
+      table: {
+        defaultColumnIdStyle: 'myNewStyle'
+      },
+      features: {
+        paginate: false,
+        search: false,
+        recordCount: false,
+        perPageSelect: false
+      }
+    });
+
+    let records = window.history.state.dynatable.dataset.records
+
+    expect(records).toEqual([
+      {
+        "dynatable-original-index": 0,
+        "NName": "Fred",
+        "HHobby": "Roller Skating",
+        "FFavorite_Music": "Disco"
+      },
+      {
+        "dynatable-original-index": 1,
+        "NName": "Helen",
+        "HHobby": "Rock Climbing",
+        "FFavorite_Music": "Alternative"
+      },
+      {
+        "dynatable-original-index": 2,
+        "NName": "Glen",
+        "HHobby": "Traveling",
+        "FFavorite_Music": "Classical"
+      }
+    ])
+  })
 })
