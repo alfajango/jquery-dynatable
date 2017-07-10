@@ -34,6 +34,7 @@ describe('Normalization', () => {
 
   afterEach(() => {
     $("#dynatable-spec").html("")
+    window.history.state.dynatable = null
   })
 
   it("should create table JSON representation", () => {
@@ -180,7 +181,6 @@ describe('Normalization', () => {
   })
 
   it("should render table from existing JSON", () => {
-
     let json = "<pre id='json-records'>" +
       JSON.stringify([
         { "band": "Weezer", "song": "El Scorcho" },
@@ -210,5 +210,56 @@ describe('Normalization', () => {
         }
       ]
     )
+  })
+
+  it("should fetch table data using AJAX", () => {
+    spyOn($, 'ajax').and.callFake((req) => {
+      req.success({
+        "records": [
+          {
+            "someAttribute": "I am record one",
+            "someOtherAttribute": "Fetched by AJAX"
+          },
+          {
+            "someAttribute": "I am record two",
+            "someOtherAttribute": "Cuz it's awesome"
+          },
+          {
+            "someAttribute": "I am record three",
+            "someOtherAttribute": "Yup, still AJAX"
+          }
+        ],
+        "queryRecordCount": 3,
+        "totalRecordCount": 3
+      })
+    })
+
+    $("#my-table").html("\
+      <thead>\
+        <th>Some Attribute</th>\
+        <th>Some Other Attribute</th>\
+      </thead>\
+      <tbody>\
+      </tbody>\
+    ")
+
+    $('#my-table').dynatable({
+      dataset: {
+        ajax: true,
+        ajaxUrl: "/dynatable-ajax.json",
+        ajaxOnLoad: true,
+        records: []
+      }
+    })
+
+    let records = window.history.state.dynatable.dataset.records
+
+    expect(records.length).toBe(3)
+    expect(records[0].someAttribute).toBe("I am record one")
+    expect(records[0].someOtherAttribute).toBe("Fetched by AJAX")
+    expect(records[1].someAttribute).toBe("I am record two")
+    expect(records[1].someOtherAttribute).toBe("Cuz it's awesome")
+    expect(records[2].someAttribute).toBe("I am record three")
+    expect(records[2].someOtherAttribute).toBe("Yup, still AJAX")
   })
 })
