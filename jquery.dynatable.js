@@ -878,11 +878,20 @@
       } catch(error) {
         // Make cached records = null, so that `pop` will rerun process to retrieve records
         cache.dynatable.dataset.records = null;
-        window.history[pushFunction](cache, "Dynatable state", path + params + hash);
+        cache.dynatable.dataset.originalRecords = null;
+        try {
+          window.history[pushFunction](cache, "Dynatable state", path + params + hash);
+        } catch(error2) {
+          console.error("Error pushing state to history, skipping.", error2);
+        }
       }
     };
 
     this.pop = function(event) {
+      if ( event.state.dynatable.dataset.originalRecords === null) {
+        event.state.dynatable.dataset.originalRecords = settings.dataset.originalRecords;
+      }
+
       var data = event.state.dynatable;
       settings.dataset = data.dataset;
 
