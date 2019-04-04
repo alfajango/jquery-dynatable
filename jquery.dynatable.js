@@ -50,7 +50,8 @@
       pushState: true,
       search: true,
       recordCount: true,
-      perPageSelect: true
+      perPageSelect: true,
+      copyTRClass: false
     },
     table: {
       defaultColumnIdStyle: 'camelCase',
@@ -675,6 +676,11 @@
       tableRecords.each(function(index){
         var record = {};
         record['dynatable-original-index'] = index;
+        if (settings.features.copyTRClass) {
+            if ($(this)[0].className && $(this)[0].className != "") {
+                record["originalTRClass"] = $(this)[0].className;
+            }
+        }
         $(this).find('th,td').each(function(index) {
           if (columns[index] === undefined) {
             // Header cell didn't exist for this column, so let's generate and append
