@@ -970,6 +970,12 @@
         var aAttr = (a['dynatable-sortable-text'] && a['dynatable-sortable-text'][attr]) ? a['dynatable-sortable-text'][attr] : a[attr],
             bAttr = (b['dynatable-sortable-text'] && b['dynatable-sortable-text'][attr]) ? b['dynatable-sortable-text'][attr] : b[attr],
             comparison;
+
+        // handle sorting of null attributes
+        if (aAttr === null && bAttr === null) return 0;
+        if (aAttr === null) return (direction > 0 ? 1 : -1);
+        if (bAttr === null) return (direction > 0 ? -1 : 1);
+
         aAttr = aAttr.toLowerCase();
         bAttr = bAttr.toLowerCase();
         comparison = aAttr === bAttr ? 0 : (direction > 0 ? aAttr > bAttr : bAttr > aAttr);
