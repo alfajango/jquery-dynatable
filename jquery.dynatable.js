@@ -86,6 +86,7 @@
       perPageTarget: null,
       perPagePlacement: 'before',
       perPageText: 'Show: ',
+      perPageTextSuffix: '', // or e.g. ' records on a page'
       pageText: 'Pages: ',
       recordCountPageBoundTemplate: '{pageLowerBound} to {pageUpperBound} of',
       recordCountPageUnboundedTemplate: '{recordsShown} of',
@@ -1353,7 +1354,9 @@
 
       return $('<span />', {
         'class': 'dynatable-per-page'
-      }).append("<span class='dynatable-per-page-label'>" + settings.inputs.perPageText + "</span>").append($select);
+      }).append("<span class='dynatable-per-page-label'>" + settings.inputs.perPageText + "</span>")
+        .append($select)
+        .append("<span class='dynatable-per-page-label'>" + settings.inputs.perPageTextSuffix + "</span>");
     };
 
     this.attach = function() {
