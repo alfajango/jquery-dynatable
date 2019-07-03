@@ -654,7 +654,7 @@
     };
 
     this.resetOriginal = function() {
-      settings.dataset.records = settings.dataset.originalRecords || [];
+      settings.dataset.records = $.extend(true, [], settings.dataset.originalRecords) || [];
     };
 
     this.pageBounds = function() {
@@ -970,8 +970,9 @@
         var aAttr = (a['dynatable-sortable-text'] && a['dynatable-sortable-text'][attr]) ? a['dynatable-sortable-text'][attr] : a[attr],
             bAttr = (b['dynatable-sortable-text'] && b['dynatable-sortable-text'][attr]) ? b['dynatable-sortable-text'][attr] : b[attr],
             comparison;
-        aAttr = aAttr.toLowerCase();
-        bAttr = bAttr.toLowerCase();
+        // don't call toLowerCase if the item is null
+        aAttr = aAttr ? aAttr.toLowerCase() : aAttr;
+        bAttr = bAttr ? bAttr.toLowerCase() : bAttr;
         comparison = aAttr === bAttr ? 0 : (direction > 0 ? aAttr > bAttr : bAttr > aAttr);
         // force false boolean value to -1, true to 1, and tie to 0
         return comparison === false ? -1 : (comparison - 0);
