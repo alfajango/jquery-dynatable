@@ -1499,6 +1499,9 @@
       },
       lowercase: function(text) {
         return text.replace(/([A-Z])/g, function($1){return $1.toLowerCase();});
+      },
+      none: function(text) {
+        return text;
       }
     },
     // Deserialize params in URL to object
