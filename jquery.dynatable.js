@@ -80,6 +80,7 @@
       paginationPrev: 'Previous',
       paginationNext: 'Next',
       paginationGap: [1,2,2,1],
+      searchAutofocus: false, // note: won't work in all browsers (esp. mobile)
       searchTarget: null,
       searchPlacement: 'before',
       searchText: 'Search: ',
@@ -1264,6 +1265,10 @@
             text: settings.inputs.searchText
           }).append($search);
 
+      if (settings.inputs.searchAutofocus) {
+        $search.prop('autofocus', true);
+      }
+      
       $search
         .bind(settings.inputs.queryEvent, function() {
           obj.queries.runSearch($(this).val());
