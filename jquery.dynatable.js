@@ -94,6 +94,7 @@
       recordCountText: 'Showing',
       recordCountTextTemplate: '{text} {pageTemplate} {totalTemplate} {filteredTemplate}',
       recordCountTemplate: '<span id="dynatable-record-count-{elementId}" class="dynatable-record-count">{textTemplate}</span>',
+      processingTemplate: '<span>{text}</span>',
       processingText: 'Processing...'
     },
     dataset: {
@@ -775,8 +776,12 @@
     };
 
     this.create = function() {
+      var html = utility.template(settings.inputs.processingTemplate, {
+        text: settings.inputs.processingText
+      });
+
       var $processing = $('<div></div>', {
-            html: '<span>' + settings.inputs.processingText + '</span>',
+            html: html,
             id: 'dynatable-processing-' + obj.element.id,
             'class': 'dynatable-processing',
             style: 'position: absolute; display: none;'
@@ -787,7 +792,7 @@
 
     this.position = function() {
       var $processing = $('#dynatable-processing-' + obj.element.id),
-          $span = $processing.children('span'),
+          $span = $processing.find('>:first-child'),
           spanHeight = $span.outerHeight(),
           spanWidth = $span.outerWidth(),
           $covered = obj.$element,
