@@ -1395,7 +1395,9 @@
             (pages + 1) - settings.inputs.paginationGap[3]
           ];
 
-      pageLinks += '<li><span>' + settings.inputs.pageText + '</span></li>';
+      if (settings.inputs.pageText) {
+        pageLinks += '<li><span>' + settings.inputs.pageText + '</span></li>';
+      }
 
       for (var i = 1; i <= pages; i++) {
         if ( (i > breaks[0] && i < breaks[1]) || (i > breaks[2] && i < breaks[3])) {
