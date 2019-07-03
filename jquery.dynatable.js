@@ -976,6 +976,42 @@
         // force false boolean value to -1, true to 1, and tie to 0
         return comparison === false ? -1 : (comparison - 0);
       },
+      alphaNumeric: function(a, b, attr, direction) {
+        //swap if reverse
+        if(direction === -1) {
+          var temp = a;
+          a = b;
+          b = temp;
+        }
+
+        //extract display text
+        a = $(a[attr.toString()]).text();
+        b = $(b[attr.toString()]).text();
+
+        var aMatch, bMatch, a1, b1, i= 0, n,
+
+        regex =/(\.\d+)|(\d+(\.\d+)?)|([^\d.]+)|(\.\D+)|(\.$)/g;
+
+        //equal
+        if(a === b) return 0;
+
+        //match
+        aMatch = a.toLowerCase().match(regex);
+        bMatch = b.toLowerCase().match(regex);
+
+        //sort
+        while(i< aMatch.length){
+            if(!bMatch[i]) return 1;
+            a1= aMatch[i],
+            b1= bMatch[i++];
+            if(a1!== b1){
+                n= a1-b1;
+                if(!isNaN(n)) return n;
+                return a1>b1? 1:-1;
+            }
+        }
+        return b[i]? -1:0;
+      },
       originalPlacement: function(a, b) {
         return a['dynatable-original-index'] - b['dynatable-original-index'];
       }
