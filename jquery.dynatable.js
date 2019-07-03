@@ -206,13 +206,20 @@
   };
 
   processAll = function(skipPushState) {
-    var data = {};
+    var data = {}, self = this;
 
     this.$element.trigger('dynatable:beforeProcess', data);
 
     if (!$.isEmptyObject(this.settings.dataset.queries)) { data[this.settings.params.queries] = this.settings.dataset.queries; }
     // TODO: Wrap this in a try/rescue block to hide the processing indicator and indicate something went wrong if error
     this.processingIndicator.show();
+
+    setTimeout(function(){
+      processNow.call(self, data, skipPushState);
+    }, 0);
+  }
+
+  processNow = function(data, skipPushState) {
 
     if (this.settings.features.sort && !$.isEmptyObject(this.settings.dataset.sorts)) { data[this.settings.params.sorts] = this.settings.dataset.sorts; }
     if (this.settings.features.paginate && this.settings.dataset.page) {
