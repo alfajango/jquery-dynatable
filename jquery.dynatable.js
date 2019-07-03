@@ -1131,9 +1131,9 @@
       }
     };
 
-    this.add = function(name, value) {
-      // reset to first page since query will change records
-      if (settings.features.paginate) {
+    this.add = function(name, value, skipPageReset) {
+      // only reset the page if skipPageReset is not enabled and the filter is not already applied
+      if (settings.features.paginate && !skipPageReset && (!settings.dataset.queries[name] || settings.dataset.queries[name] !== value)) {
         settings.dataset.page = 1;
       }
       settings.dataset.queries[name] = value;
