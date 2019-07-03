@@ -329,7 +329,7 @@
     return record[this.id];
   };
 
-  function defaultAttributeReader(cell, record) {
+  function defaultAttributeReader(cell, record, column) {
     return $(cell).html();
   };
 
@@ -682,7 +682,7 @@
             // retrieve the contents of this column for each record)
             obj.domColumns.add(obj.domColumns.generate(), columns.length, false, true); // don't skipAppend, do skipUpdate
           }
-          var value = columns[index].attributeReader(this, record),
+          var value = columns[index].attributeReader(this, record, columns[index]),
               attr = columns[index].id;
 
           // If value from table is HTML, let's get and cache the text equivalent for
