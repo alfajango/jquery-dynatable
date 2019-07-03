@@ -644,7 +644,9 @@
         return comparison;
       }
 
-      return sort.call(settings.dataset.records, sortFunction);
+      if (sortsKeys.length > 0 || !$.isEmptyObject(sorts)) {
+        sort.call(settings.dataset.records, sortFunction);
+      }
     };
 
     this.paginate = function() {
