@@ -458,11 +458,13 @@
     };
 
     this.add = function($column, position, skipAppend, skipUpdate) {
-      var columns = settings.table.columns,
-          label = $column.text(),
-          id = $column.data('dynatable-column') || utility.normalizeText(label, settings.table.defaultColumnIdStyle),
+      var columns = settings.table.columns, label = $column.text(),
+          id = $column.data('dynatable-column') ||
+          utility.normalizeText(label, settings.table.defaultColumnIdStyle),
           dataSorts = $column.data('dynatable-sorts'),
-          sorts = dataSorts ? $.map(dataSorts.split(','), function(text) { return $.trim(text); }) : [id];
+          sorts = dataSorts ? $.map(dataSorts.split(','), function(text) {
+            return text.trim();
+          }) : [id];
 
       // If the column id is blank, generate an id for it
       if ( !id ) {
@@ -486,7 +488,9 @@
       $column
         .attr('data-dynatable-column', id)
         .addClass('dynatable-head');
-      if (settings.table.headRowClass) { $column.addClass(settings.table.headRowClass); }
+      if (settings.table.headRowClass) {
+        $column.addClass(settings.table.headRowClass);
+      }
 
       // Append column header to table
       if (!skipAppend) {
@@ -497,7 +501,8 @@
 
         if ($sibling.length) {
           $sibling.before($column);
-        // sibling column doesn't yet exist (maybe this is the last column in the header row)
+          // sibling column doesn't yet exist (maybe this is the last column in
+          // the header row)
         } else {
           obj.$element.find(settings.table.headRowSelector).append($column);
         }
@@ -696,7 +701,8 @@
             if (! record['dynatable-sortable-text']) {
               record['dynatable-sortable-text'] = {};
             }
-            record['dynatable-sortable-text'][attr] = $.trim($('<div></div>').html(value).text());
+            record['dynatable-sortable-text'][attr] =
+                $('<div></div>').html(value).text().trim();
           }
 
           record[attr] = value;
