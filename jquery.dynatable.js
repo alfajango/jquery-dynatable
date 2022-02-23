@@ -1509,11 +1509,14 @@
       }
     },
     // Deserialize params in URL to object
-    // see http://stackoverflow.com/questions/1131630/javascript-jquery-param-inverse-function/3401265#3401265
+    // see
+    // http://stackoverflow.com/questions/1131630/javascript-jquery-param-inverse-function/3401265#3401265
     deserialize: function(query) {
       if (!query) return {};
       // modified to accept an array of partial URL strings
-      if (typeof(query) === "object") { query = query.join('&'); }
+      if (typeof(query) === "object") {
+        query = query.join('&');
+      }
 
       var hash = {},
           vars = query.split("&");
@@ -1523,7 +1526,9 @@
             k = decodeURIComponent(pair[0]),
             v, m;
 
-        if (!pair[1]) { continue };
+        if (!pair[1]) {
+          continue
+        };
         v = decodeURIComponent(pair[1].replace(/\+/g, ' '));
 
         // modified to parse multi-level parameters (e.g. "hi[there][dude]=whatsup" => hi: {there: {dude: "whatsup"}})
@@ -1548,13 +1553,13 @@
           } else {
             hash[k] = [v];
           }
-        // If subsequent entry with this name and not array
+          // If subsequent entry with this name and not array
         } else if (typeof hash[k] === "string") {
           hash[k] = v;  // replace it
-        // modified to add support for objects
+          // modified to add support for objects
         } else if (typeof hash[k] === "object") {
           hash[k] = $.extend({}, hash[k], v);
-        // If subsequent entry with this name and is array
+          // If subsequent entry with this name and is array
         } else {
           hash[k].push(v);
         }
@@ -1604,15 +1609,21 @@
             var queries = settings.inputs.queries || [],
                 inputQueries = $.makeArray(queries.map(function() { return $(this).attr('name') }));
 
-            if (settings.features.search) { inputQueries.push('search'); }
+            if (settings.features.search) {
+              inputQueries.push('search');
+            }
 
             for (var i = 0, len = inputQueries.length; i < len; i++) {
               var attr = inputQueries[i];
               if (data[label][attr]) {
-                if (typeof urlOptions[label] === 'undefined') { urlOptions[label] = {}; }
+                if (typeof urlOptions[label] === 'undefined') {
+                  urlOptions[label] = {};
+                }
                 urlOptions[label][attr] = data[label][attr];
               } else {
-                if (urlOptions && urlOptions[label] && urlOptions[label][attr]) { delete urlOptions[label][attr]; }
+                if (urlOptions && urlOptions[label] && urlOptions[label][attr]) {
+                  delete urlOptions[label][attr];
+                }
               }
             }
             continue;
@@ -1629,8 +1640,9 @@
       return $.param(urlOptions);
     },
     // Get array of keys from object
-    // see http://stackoverflow.com/questions/208016/how-to-list-the-properties-of-a-javascript-object/208020#208020
-    keysFromObject: function(obj){
+    // see
+    // http://stackoverflow.com/questions/208016/how-to-list-the-properties-of-a-javascript-object/208020#208020
+    keysFromObject: function(obj) {
       var keys = [];
       for (var key in obj){
         keys.push(key);
@@ -1655,8 +1667,7 @@
     // Return true if supplied test function passes for ALL items in an array
     allMatch: function(item, arrayOrObject, test) {
       // start off with true result by default
-      var match = true,
-          isArray = $.isArray(arrayOrObject);
+      var match = true, isArray = $Array.isArray(arrayOrObject);
       // Loop through all items in array
       $.each(arrayOrObject, function(key, value) {
         var result = isArray ? test(item, value) : test(item, key, value);
@@ -1671,8 +1682,7 @@
     },
     // Return true if supplied test function passes for ANY items in an array
     anyMatch: function(item, arrayOrObject, test) {
-      var match = false,
-          isArray = $.isArray(arrayOrObject);
+      var match = false, isArray = $Array.isArray(arrayOrObject);
 
       $.each(arrayOrObject, function(key, value) {
         var result = isArray ? test(item, value) : test(item, key, value);
@@ -1701,11 +1711,13 @@
       }
       return true;
     },
-    // Taken from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/105074#105074
+    // Taken from
+    // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/105074#105074
     randomHash: function() {
       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
     },
-    // Adapted from http://stackoverflow.com/questions/377961/efficient-javascript-string-replacement/378001#378001
+    // Adapted from
+    // http://stackoverflow.com/questions/377961/efficient-javascript-string-replacement/378001#378001
     template: function(str, data) {
       return str.replace(/{(\w*)}/g, function(match, key) {
         return data.hasOwnProperty(key) ? data[key] : "";
