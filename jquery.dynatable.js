@@ -1008,7 +1008,7 @@
           id = $cell.data('dynatable-column'),
           column = utility.findObjectInArray(settings.table.columns, {id: id});
 
-      $link.bind('click', function(e) {
+      $link.on('click', function(e) {
         _this.toggleSort(e, $link, column);
         obj.process();
 
@@ -1210,14 +1210,13 @@
               e.preventDefault();
             };
 
-        $this
-          .attr('data-dynatable-query', query)
-          .bind(event, queryFunction)
-          .bind('keypress', function(e) {
-            if (e.which == 13) {
-              queryFunction.call(this, e);
-            }
-          });
+        $this.attr('data-dynatable-query', query)
+            .on(event, queryFunction)
+            .on('keypress', function(e) {
+              if (e.which == 13) {
+                queryFunction.call(this, e);
+              }
+            });
 
         if (settings.dataset.queries[query]) { $this.val(decodeURIComponent(settings.dataset.queries[query])); }
       });
@@ -1272,15 +1271,16 @@
           }).append($search);
 
       $search
-        .bind(settings.inputs.queryEvent, function() {
-          obj.queries.runSearch($(this).val());
-        })
-        .bind('keypress', function(e) {
-          if (e.which == 13) {
-            obj.queries.runSearch($(this).val());
-            e.preventDefault();
-          }
-        });
+          .on(settings.inputs.queryEvent,
+              function() {
+                obj.queries.runSearch($(this).val());
+              })
+          .on('keypress', function(e) {
+            if (e.which == 13) {
+              obj.queries.runSearch($(this).val());
+              e.preventDefault();
+            }
+          });
       return $searchSpan;
     };
 
@@ -1353,7 +1353,7 @@
         $select.append('<option value="' + number + '" ' + selected + '>' + number + '</option>');
       }
 
-      $select.bind('change', function(e) {
+      $select.on('change', function(e) {
         _this.set($(this).val());
         obj.process();
       });
