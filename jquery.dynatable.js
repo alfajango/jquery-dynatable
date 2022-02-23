@@ -449,7 +449,11 @@
           _this.add($(this), index, true);
         });
       } else {
-        return $.error("Couldn't find any columns headers in '" + settings.table.headRowSelector + " th,td'. If your header row is different, specify the selector in the table: headRowSelector option.");
+        return $.on(
+            'error',
+            'Couldn\'t find any columns headers in \'' +
+                settings.table.headRowSelector +
+                ' th,td\'. If your header row is different, specify the selector in the table: headRowSelector option.');
       }
     };
 
@@ -1159,7 +1163,10 @@
                 return record[query] == queryValue;
               };
             } else {
-              $.error("Query named '" + query + "' called, but not defined in queries.functions");
+              $.on(
+                  'error',
+                  'Query named \'' + query +
+                      '\' called, but not defined in queries.functions');
               continue; // to skip to next query
             }
           }
