@@ -1444,7 +1444,7 @@
       var selector = '#dynatable-pagination-links-' + obj.element.id + ' a.' + pageLinkClass + ':not(.' + activePageClass + ',.' + disabledPageClass + ')';
       // kill any existing delegated-bindings so they don't stack up
       $(document).undelegate(selector, 'click.dynatable');
-      $(document).delegate(selector, 'click.dynatable', function(e) {
+      $(document).on(selector, 'click.dynatable', function(e) {
         $this = $(this);
         $this.closest(settings.inputs.paginationClass).find('.' + activePageClass).removeClass(activePageClass);
         $this.addClass(activePageClass);
