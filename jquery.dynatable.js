@@ -449,16 +449,22 @@
           _this.add($(this), index, true);
         });
       } else {
-        return $.error("Couldn't find any columns headers in '" + settings.table.headRowSelector + " th,td'. If your header row is different, specify the selector in the table: headRowSelector option.");
+        return $.on(
+            'error',
+            'Couldn\'t find any columns headers in \'' +
+                settings.table.headRowSelector +
+                ' th,td\'. If your header row is different, specify the selector in the table: headRowSelector option.');
       }
     };
 
     this.add = function($column, position, skipAppend, skipUpdate) {
-      var columns = settings.table.columns,
-          label = $column.text(),
-          id = $column.data('dynatable-column') || utility.normalizeText(label, settings.table.defaultColumnIdStyle),
+      var columns = settings.table.columns, label = $column.text(),
+          id = $column.data('dynatable-column') ||
+          utility.normalizeText(label, settings.table.defaultColumnIdStyle),
           dataSorts = $column.data('dynatable-sorts'),
-          sorts = dataSorts ? $.map(dataSorts.split(','), function(text) { return $.trim(text); }) : [id];
+          sorts = dataSorts ? $.map(dataSorts.split(','), function(text) {
+            return text.trim();
+          }) : [id];
 
       // If the column id is blank, generate an id for it
       if ( !id ) {
@@ -482,7 +488,9 @@
       $column
         .attr('data-dynatable-column', id)
         .addClass('dynatable-head');
-      if (settings.table.headRowClass) { $column.addClass(settings.table.headRowClass); }
+      if (settings.table.headRowClass) {
+        $column.addClass(settings.table.headRowClass);
+      }
 
       // Append column header to table
       if (!skipAppend) {
@@ -493,7 +501,8 @@
 
         if ($sibling.length) {
           $sibling.before($column);
-        // sibling column doesn't yet exist (maybe this is the last column in the header row)
+          // sibling column doesn't yet exist (maybe this is the last column in
+          // the header row)
         } else {
           obj.$element.find(settings.table.headRowSelector).append($column);
         }
@@ -692,7 +701,8 @@
             if (! record['dynatable-sortable-text']) {
               record['dynatable-sortable-text'] = {};
             }
-            record['dynatable-sortable-text'][attr] = $.trim($('<div></div>').html(value).text());
+            record['dynatable-sortable-text'][attr] =
+                $('<div></div>').html(value).text().trim();
           }
 
           record[attr] = value;
@@ -1004,7 +1014,7 @@
           id = $cell.data('dynatable-column'),
           column = utility.findObjectInArray(settings.table.columns, {id: id});
 
-      $link.bind('click', function(e) {
+      $link.on('click', function(e) {
         _this.toggleSort(e, $link, column);
         obj.process();
 
@@ -1159,7 +1169,10 @@
                 return record[query] == queryValue;
               };
             } else {
-              $.error("Query named '" + query + "' called, but not defined in queries.functions");
+              $.on(
+                  'error',
+                  'Query named \'' + query +
+                      '\' called, but not defined in queries.functions');
               continue; // to skip to next query
             }
           }
@@ -1203,14 +1216,13 @@
               e.preventDefault();
             };
 
-        $this
-          .attr('data-dynatable-query', query)
-          .bind(event, queryFunction)
-          .bind('keypress', function(e) {
-            if (e.which == 13) {
-              queryFunction.call(this, e);
-            }
-          });
+        $this.attr('data-dynatable-query', query)
+            .on(event, queryFunction)
+            .on('keypress', function(e) {
+              if (e.which == 13) {
+                queryFunction.call(this, e);
+              }
+            });
 
         if (settings.dataset.queries[query]) { $this.val(decodeURIComponent(settings.dataset.queries[query])); }
       });
@@ -1265,15 +1277,16 @@
           }).append($search);
 
       $search
-        .bind(settings.inputs.queryEvent, function() {
-          obj.queries.runSearch($(this).val());
-        })
-        .bind('keypress', function(e) {
-          if (e.which == 13) {
-            obj.queries.runSearch($(this).val());
-            e.preventDefault();
-          }
-        });
+          .on(settings.inputs.queryEvent,
+              function() {
+                obj.queries.runSearch($(this).val());
+              })
+          .on('keypress', function(e) {
+            if (e.which == 13) {
+              obj.queries.runSearch($(this).val());
+              e.preventDefault();
+            }
+          });
       return $searchSpan;
     };
 
@@ -1346,7 +1359,7 @@
         $select.append('<option value="' + number + '" ' + selected + '>' + number + '</option>');
       }
 
-      $select.bind('change', function(e) {
+      $select.on('change', function(e) {
         _this.set($(this).val());
         obj.process();
       });
@@ -1436,8 +1449,8 @@
       // only bind page handler to non-active and non-disabled page links
       var selector = '#dynatable-pagination-links-' + obj.element.id + ' a.' + pageLinkClass + ':not(.' + activePageClass + ',.' + disabledPageClass + ')';
       // kill any existing delegated-bindings so they don't stack up
-      $(document).undelegate(selector, 'click.dynatable');
-      $(document).delegate(selector, 'click.dynatable', function(e) {
+      $(document).off('click.dynatable', selector);
+      $(document).on('click.dynatable', selector, function(e) {
         $this = $(this);
         $this.closest(settings.inputs.paginationClass).find('.' + activePageClass).removeClass(activePageClass);
         $this.addClass(activePageClass);
@@ -1502,11 +1515,14 @@
       }
     },
     // Deserialize params in URL to object
-    // see http://stackoverflow.com/questions/1131630/javascript-jquery-param-inverse-function/3401265#3401265
+    // see
+    // http://stackoverflow.com/questions/1131630/javascript-jquery-param-inverse-function/3401265#3401265
     deserialize: function(query) {
       if (!query) return {};
       // modified to accept an array of partial URL strings
-      if (typeof(query) === "object") { query = query.join('&'); }
+      if (typeof(query) === "object") {
+        query = query.join('&');
+      }
 
       var hash = {},
           vars = query.split("&");
@@ -1516,7 +1532,9 @@
             k = decodeURIComponent(pair[0]),
             v, m;
 
-        if (!pair[1]) { continue };
+        if (!pair[1]) {
+          continue
+        };
         v = decodeURIComponent(pair[1].replace(/\+/g, ' '));
 
         // modified to parse multi-level parameters (e.g. "hi[there][dude]=whatsup" => hi: {there: {dude: "whatsup"}})
@@ -1541,13 +1559,13 @@
           } else {
             hash[k] = [v];
           }
-        // If subsequent entry with this name and not array
+          // If subsequent entry with this name and not array
         } else if (typeof hash[k] === "string") {
           hash[k] = v;  // replace it
-        // modified to add support for objects
+          // modified to add support for objects
         } else if (typeof hash[k] === "object") {
           hash[k] = $.extend({}, hash[k], v);
-        // If subsequent entry with this name and is array
+          // If subsequent entry with this name and is array
         } else {
           hash[k].push(v);
         }
@@ -1597,15 +1615,21 @@
             var queries = settings.inputs.queries || [],
                 inputQueries = $.makeArray(queries.map(function() { return $(this).attr('name') }));
 
-            if (settings.features.search) { inputQueries.push('search'); }
+            if (settings.features.search) {
+              inputQueries.push('search');
+            }
 
             for (var i = 0, len = inputQueries.length; i < len; i++) {
               var attr = inputQueries[i];
               if (data[label][attr]) {
-                if (typeof urlOptions[label] === 'undefined') { urlOptions[label] = {}; }
+                if (typeof urlOptions[label] === 'undefined') {
+                  urlOptions[label] = {};
+                }
                 urlOptions[label][attr] = data[label][attr];
               } else {
-                if (urlOptions && urlOptions[label] && urlOptions[label][attr]) { delete urlOptions[label][attr]; }
+                if (urlOptions && urlOptions[label] && urlOptions[label][attr]) {
+                  delete urlOptions[label][attr];
+                }
               }
             }
             continue;
@@ -1622,8 +1646,9 @@
       return $.param(urlOptions);
     },
     // Get array of keys from object
-    // see http://stackoverflow.com/questions/208016/how-to-list-the-properties-of-a-javascript-object/208020#208020
-    keysFromObject: function(obj){
+    // see
+    // http://stackoverflow.com/questions/208016/how-to-list-the-properties-of-a-javascript-object/208020#208020
+    keysFromObject: function(obj) {
       var keys = [];
       for (var key in obj){
         keys.push(key);
@@ -1648,8 +1673,7 @@
     // Return true if supplied test function passes for ALL items in an array
     allMatch: function(item, arrayOrObject, test) {
       // start off with true result by default
-      var match = true,
-          isArray = $.isArray(arrayOrObject);
+      var match = true, isArray = Array.isArray(arrayOrObject);
       // Loop through all items in array
       $.each(arrayOrObject, function(key, value) {
         var result = isArray ? test(item, value) : test(item, key, value);
@@ -1664,8 +1688,7 @@
     },
     // Return true if supplied test function passes for ANY items in an array
     anyMatch: function(item, arrayOrObject, test) {
-      var match = false,
-          isArray = $.isArray(arrayOrObject);
+      var match = false, isArray = Array.isArray(arrayOrObject);
 
       $.each(arrayOrObject, function(key, value) {
         var result = isArray ? test(item, value) : test(item, key, value);
@@ -1694,11 +1717,13 @@
       }
       return true;
     },
-    // Taken from http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/105074#105074
+    // Taken from
+    // http://stackoverflow.com/questions/105034/how-to-create-a-guid-uuid-in-javascript/105074#105074
     randomHash: function() {
       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
     },
-    // Adapted from http://stackoverflow.com/questions/377961/efficient-javascript-string-replacement/378001#378001
+    // Adapted from
+    // http://stackoverflow.com/questions/377961/efficient-javascript-string-replacement/378001#378001
     template: function(str, data) {
       return str.replace(/{(\w*)}/g, function(match, key) {
         return data.hasOwnProperty(key) ? data[key] : "";
