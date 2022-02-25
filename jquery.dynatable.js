@@ -1449,8 +1449,8 @@
       // only bind page handler to non-active and non-disabled page links
       var selector = '#dynatable-pagination-links-' + obj.element.id + ' a.' + pageLinkClass + ':not(.' + activePageClass + ',.' + disabledPageClass + ')';
       // kill any existing delegated-bindings so they don't stack up
-      $(document).off(selector, 'click.dynatable');
-      $(document).on(selector, 'click.dynatable', function(e) {
+      $(document).off('click.dynatable', selector);
+      $(document).on('click.dynatable', selector, function(e) {
         $this = $(this);
         $this.closest(settings.inputs.paginationClass).find('.' + activePageClass).removeClass(activePageClass);
         $this.addClass(activePageClass);
@@ -1673,7 +1673,7 @@
     // Return true if supplied test function passes for ALL items in an array
     allMatch: function(item, arrayOrObject, test) {
       // start off with true result by default
-      var match = true, isArray = $Array.isArray(arrayOrObject);
+      var match = true, isArray = Array.isArray(arrayOrObject);
       // Loop through all items in array
       $.each(arrayOrObject, function(key, value) {
         var result = isArray ? test(item, value) : test(item, key, value);
@@ -1688,7 +1688,7 @@
     },
     // Return true if supplied test function passes for ANY items in an array
     anyMatch: function(item, arrayOrObject, test) {
-      var match = false, isArray = $Array.isArray(arrayOrObject);
+      var match = false, isArray = Array.isArray(arrayOrObject);
 
       $.each(arrayOrObject, function(key, value) {
         var result = isArray ? test(item, value) : test(item, key, value);
